@@ -1,0 +1,334 @@
+---
+title: 'Lab 7: Analysis of Variance'
+output:
+  pdf_document: default
+  word_document: default
+---
+	
+Complete all of the following questions, adding your inputs as code chunks (enclose within triple accent marks) within Rmarkdown.
+
+The exercises are not marked and will not be factored into your course grade, but it is important to complete them to make sure you have the skills to answer assessment questions.  You may consult any resource, including other students and the instructor.  Please Knit this document to a PDF and upload your work via Canvas at the end of the session.  Solutions will be posted for you to check your own answers.
+
+******
+
+## Simple ANOVA
+
+A baking company is conducting a consumer trial of five competing biscuit recipes.  Passersby in a supermarket are given a biscuit and asked to score it on a scale of 1 (worst) to 10 (best).
+
+The data are provided in biscuits.csv.
+
+1. Load the data in from disk.   Make a box plot, showing the medians and quartiles for each group.
+
+```{r}
+data=read.csv('biscuits.csv')
+head(data)
+
+```
+
+```{r }
+attach(data)
+boxplot(rating~recipe, col=c('blue','green','red', 'orange', 'yellow'))
+
+```
+
+2. Make a simple scatter plot of all the ratings (no x-axis variable other than the index number).  Colour-code the individual points by recipe.
+
+```{r}
+plot(rating, pch=21, bg=c('blue','green','red', 'orange', 'yellow')[recipe], ylab='rating')
+
+# I am trying this but I don't know why the colors are not appearing .
+
+```
+
+3. Calculate the mean and SD (of ratings) for the whole data set (the "overall" mean and overall SD, sometimes also called the grand mean and grand SD).
+
+```{r}
+g.mean = mean(rating)
+g.sd=sd(rating)
+g.mean
+g.sd
+```
+
+4. Calculate all group means, SD's, sizes, and standard errors (use `tapply`).  
+    a. Which recipe produced the highest mean score?  
+    b. Which produced the lowest mean score?
+
+```{r}
+means = tapply(rating, recipe, mean)
+SD = tapply(rating, recipe, sd)
+
+means;SD 
+```
+## Recipe B produce hoights mean which is 7 and recipe C produced lowest mean whioch is 5.5.
+
+5. Examine the group SD's above, and compare these values to the "overall" SD from #3.  Does grouping the data by recipe seem to reduce the variation by much?
+
+```{r}
+g.sd
+SD 
+```
+
+
+ANOVA formalizes this procedure of comparing the SD (or variance) of all the data together (#3) versus the SD (or variance) of the data grouped by category (#5).  It is worked most easily by calculating sums of squares, degrees of freedom, then dividing and performing and F-test.
+	
+6. Calculate SSY, the sum of squares of: all data points minus the overall mean.  (Use a vector operation.)
+	
+```{r}
+
+rate=c(rating)
+SSY= sum((rate-g.mean)^2)
+
+SSY
+```
+	
+7. Calculate SSM, the sum of squares of (replicated) means minus the overall mean.  Do this by creating a vector of length equal to the number of data points, then setting all elements in the vector matching the 'A' recipe to the mean of A, then setting all elements matching the 'B' recipe to the mean of B, etc.  (You can do this explicitly for each group one by one, or you could use a loop or the rep command.)  Then calculate the sum of squares of: this vector minus the grand mean.
+	
+```{r}
+m = rep(0,nrow(data))
+#for (i in 1:length(means)) m[biscuits$recipe==names(means)[i]] = means[i]
+#Alternative slower way
+m[recipe=='A'] = means['A']
+m[recipe=='B'] = means['B']
+m[recipe=='C'] = means['C']
+m[recipe=='D'] = means['D']
+m[recipe=='E'] = means['E']
+SSM = sum((m-g.mean)^2)
+SSM
+
+
+```
+	
+8. Calculate SSE, the sum of squares of: all data points minus the appropriate group mean (model point).  Use the model vector you made for #7 above.
+	
+```{r}
+SSE = sum((rating-m)^2)
+SSE
+
+
+
+```
+	
+9. Confirm that SSM+SSE=SSY.
+	
+```{r}
+SSM+SSE
+```
+```{r}
+SSY
+```
+	
+10. Determine the number of degrees of freedom for SSM and SSE and store these in variables dofM and dofE.  The degrees of freedom for SSM is the number of groups minus one.  The degrees of freedom for SSE is the number of data points minus the number of groups.
+	
+```{r}
+
+dofM = 5-1
+dofE = length(rating)-5
+dofM
+dofE
+
+```
+	
+11. Calculate the F-ratio, which is (SSM/dofM)/(SSE/dofE).  The degrees of freedom are dofM = M-1 and dofE = N-M, where we have M=5 groups and N=100 data points.  Then, perform a one-tailed F-test to calculate a p-value.  Does the specific recipe have an effect on consumer taste ratings?
+		
+```{r}
+
+F = (SSM/dofM)/(SSE/dofE)
+F
+
+```
+```{r}
+1-pf(F,dofM,dofE)
+
+```
+		
+12. Perform an ANOVA in R using `aov()`.  Use the `summary()` command and confirm your results from #7, #8, #10, and #11.
+	
+```{r}
+m=aov(rating~recipe)
+m
+```
+	
+13. Check the diagnostic summary plots from your ANOVA.  Are there any serious problems?
+		
+```{r}
+summary(m)
+```
+
+```{r}
+par(mfrow=c(2,2))
+plot(m)
+```
+		
+14. Examine R's linear model using `summary.lm()`.  Make sure you understand the meaning of all the terms of the table.  Which model terms are significant based on the p-values?  Does this really mean that there is a significant difference at that level of confidence?
+	
+```{r}
+summary.lm(m)
+```
+	
+15. Perform Tukey's Honestly Significant Difference test with `TukeyHSD()`.  What pairs of recipes are "definitely" significantly different?
+		
+```{r}
+
+TukeyHSD(m)
+```
+		
+16. Suppose that A is the "current" recipe on the market and the company is considering switching the recipe to B, C, D, or E.  Apply Bonferroni's correction to the p-values in #14 to assess if any of these four recipes are significantly better than the current one.
+	
+```{r }
+pairwise.t.test(rating, recipe, p.adjust.method="bonferroni")
+```
+	
+******
+	
+## Two-way ANOVA
+	
+"Stereotype threat" is a concept in the psychological literature which states that expectations about one's group can play a significant role in performance, particularly on examinations or other formal tasks.  According to stereotype threat, groups which are socially perceived to be weaker on certain tasks actually perform worse as a direct result of latent anxiety about conforming with those stereotypes.  It has been suggested to be a possible explanation for performance gaps between genders and races on standardized examinations.
+	
+The data in stereotype.csv represents a simulated version of a classical type of stereotype threat experiment.  Students are randomly assigned to four classrooms, and then given a mathematics exam. At the start, an announcement is made:
+		
+  Control classroom: Only instructions about the exam.  
+  Classroom A: Students are told that men and women tend to do equally well on the exam.  
+  Classroom B: Students are told that men tend to do better than women on the exam.  
+  Classroom C: Students are told that women tend to do better than men on the exam.  
+	
+17. Load the data in from disk.  Plot a histogram of the distribution of all scores (no grouping) and/or make a QQ normal plot to confirm that the score distribution is roughly normal in appearance.
+	
+```{r}
+stero=read.csv('stereotype.csv')
+hist(stero$score, col='lightblue', main='Scores')
+```
+	
+18. Calculate the means and standard errors for all eight groups (four announcement factor levels $\times$ two gender factor levels).  You can save yourself a lot of hassle by using the 2D version of `tapply()` to calculate the means, lengths, and SD's of each bivariate group and using matrix operations on the resulting tables to obtain the SE.
+	
+```{r}
+summary(stero)
+means=tapply(stero$score, list(stero$gender, stero$announcement), mean)
+
+means
+```
+```{r}
+sds=tapply(stero$score, list(stero$gender, stero$announcement), sd)
+
+sds
+```
+```{r}
+
+n= tapply(stero$score,list(stero$gender,stero$announcement),length)
+n
+```
+```{r}
+se=sds/sqrt(n)
+se
+```
+	
+19. Summarize the above as a plot with error bars.   Use 2*SE for the error bars in each direction (approximately 95% confidence interval). 
+	
+```{r}
+
+loc=barplot(means, beside = TRUE, ylim=c(0,80), col = c("blue", "red"))
+arrows(loc,means-se*2,loc,means+se*2,angle=90,code=3,length=0.1)
+
+
+```
+	
+20. Now run a two-way ANOVA on the data, including interactions.
+	
+```{r}
+m= aov(stero$score~stero$gender*stero$announcement)
+
+
+```
+	
+21. Examine the output from `summary()`.  Are there significant interactions?  What does an interaction mean in the context of this experiment?
+	
+```{r}
+
+summary(m)
+```
+
+	
+22. Does the fact that the "announcement" term is not significant in the ANOVA mean that the announcement had no significant effect?
+	
+
+
+23. Now examine the `summary.lm()` output of the ANOVA.  Try to make sure you understand what all of the numbers in the primary table mean in context of the experiment ("Estimate", "Std. Error", and the associated P-value).  Do you understand why the t-test significance of the specific interaction terms is different from the F-test significance from `summary.aov()` of the interaction in general?
+	
+```{r}
+summary.lm(m)
+
+```
+	
+24. Interpreting the model terms above is challenging due to R's alphabetical choice of 'first' factor levels.  It would be more useful to calculate differences of the experimental groups against the control, and (in the context of stereotype threat theory) to calculate differences of women versus men.  Reorder the factor levels to account for this: set the order of the announcement factors to none,A,B,C, and set the order of the gender factors to M,F.  Check to confirm that the re-ordering was successful.
+	
+```{r}
+styp=stero
+styp$announcement= factor(styp$announcement, levels = c('none', 'A', 'B', 'C'))
+styp$gender=factor(styp$gender, levels = c('M', 'F'))
+levels(styp$announcement )
+levels(styp$gender)
+```
+	
+25. Rerun the ANOVA on the re-ordered data.  Confirm that the `summary.aov()` output (F-test significances) does not change, then confirm that the linear-model terms from `summary.lm()` do change.  Also inspect the model check plots with `plot()`.
+	
+```{r}
+m1=aov(score~gender*announcement, styp)
+summary.aov(m1)
+
+```
+```{r}
+summary.lm(m1)
+
+```
+```{r}
+par(mfrow=c(2,2))
+plot(m1)
+```
+26. Do these data support the notion of stereotype threat?  Are they able to constrain what fraction of the gender gap on this exam might be due to stereotype threat?  *(Note: the data is simulated; conclusions about the real world should not be drawn from this exercise!)*
+	
+	
+	
+	
+******
+
+## ANOVA with structured error
+	
+The data in bloodpressure.csv come from a hypothetical simulation of a medical trial for a new blood pressure drug.  In the trial, 16 patients with high blood pressure were given the new drug.  Of these, 8 patients were already on another blood pressure medication and 8 patients were not on another medication.  The blood pressure of each patient was measured at the start of the trial, at 1 month, and again at 2 months.  The variables in the data frame are:
+		
+  id: Patient ID number  
+  time: time elapsed in the trial (start, 1 month, or 2 months)  
+  othermed: Whether this patient was on any other blood pressure medication.  
+  pressure: Blood pressure measurement  
+	
+	
+27. Load in the data and run a "naive" ANOVA with no knowledge of the error structure.  Would you conclude that the blood pressure medication is effective (does it cause a decrease in blood pressure over time)?  Would you conclude that its effectiveness depends on whether the patient was on medication already?
+
+```{r}
+df=read.csv('bloodpressure.csv', as.is = FALSE)
+head(df)
+```
+```{r}
+naive=aov(df$pressure~df$time*df$othermed, data=df)
+naive
+
+```
+
+		
+28. Now run a new ANOVA, accounting for the error structure.  (Hint: Which variable is between subjects, and which is within subjects?  Also, be sure you convert the ID number variable to a factor!)  How does this affect your conclusions about the effectiveness and medication-dependence of the new drug?
+
+```{r}
+df$id= as.factor(df$id)
+new_anova=aov(pressure~othermed*time+Error(id/time),data=df)
+
+summary(new_anova)
+
+```
+		
+29. Make a summary plot using `interaction.plot()` to visualise the effects.   Make time the x-axis variable (you may want to re-order the factor levels) and the medication style the line-style variable.  Is the new drug more effective for people already taking medication, or for people not already taking medication?
+
+
+
+```{r}
+
+time_order= factor(df$time, levels = c('start', '1month', '2months'))
+interaction.plot(time_order, df$othermed, df$pressure)
+```

@@ -1,0 +1,363 @@
+---
+title: 'Computer Lab 8: Model Choice and Multiple Regression'
+output:
+  pdf_document: default
+  word_document: default
+---
+
+Complete all of the following questions, adding your inputs as code chunks (enclose within triple accent marks) within Rmarkdown.
+
+The exercises are not marked and will not be factored into your course grade, but it is important to complete them to make sure you have the skills to answer assessment questions.  You may consult any resource, including other students and the instructor.  Please Knit this document to a PDF and upload your work via Canvas at the end of the session.  Solutions will be posted for you to check your own answers.
+
+
+******
+
+## Nested models
+
+The file curve.csv contains some simple data (x versus y).  You are trying to decide between two competing, nested non-linear models for these data:  
+  Model 1: $y = a x^b$  
+  Model 2: $y = a x^b e^{-(x/c)^2}$  
+
+1. Load the file and plot the data as a simple scatter plot.
+
+```{r}
+df=read.csv('curve.csv')
+df
+```
+
+```{r }
+plot(df$x,df$y)
+```
+2. Using nonlinear least squares (`nls` in R), fit Model 1 to the data (store the output model in variable model1).  Overplot the model curve on the data (use `predict`).
+
+```{r}
+
+model1 = nls(y~ a*x^b, data=df, start=list(a=1,b=0.5))
+plot(df$x,df$y)
+lines(df$x,predict(model1),col='brown')
+```
+
+3. Using nonlinear least squares, fit Model 2 to the data (store the output model in variable model2).  Plot this curve and the curve from Model 1 on the data (as different colours).  (Note: if you have trouble with the fit, try using your best-fit parameters for a and b from Model 1 as starting guesses.)
+
+```{r}
+model2 = nls(y~a*x^b*exp(-(x/c)^2), data=df, start=list(a=3,b=0.35, c=10))
+
+plot(df$x,df$y)
+lines(df$x,predict(model1),col='brown')
+lines(df$x,predict(model2),col='green')
+```
+
+4. Compute the SSE of model1 yourself using the data and the model curve.  (Calculate the difference between the predictions and the data, then take the sum of squares.)  Store this in the variable SSE1.
+
+```{r}
+SSE1=sum((predict(model1)-df$y)^2)
+SSE1
+
+```
+
+5. Compute the SSE of model2 yourself using the data and the model curve.  Store this in the variable SSE2.  Confirm that it is less than SSE1, since this is a more complex model nested inside Model 1.
+
+```{r}
+
+SSE2=sum((predict(model2)-df$y)^2)
+SSE2
+
+```
+
+6. Take the difference of these two values (SSE1-SSE2) to calculate the improvement in SSE provided by the more complicated model.  Store this in the variable DSSE.
+
+```{r}
+DSSE=SSE1-SSE2
+
+DSSE
+```
+
+7. Calculate the degrees of freedom statistics and store them in variables: 
+	a. the degrees of freedom of Model 1 (store it in dofm1)  
+	b. the degrees of freedom of Model 2 (store it in dofm2)  
+	c. the difference between these two (store it in Ddof)  
+	d. the degrees of error freedom of Model 1 (store it in dofe1)  
+	e. the degrees of error freedom of Model 2 (store it in dofe2)  
+
+```{r}
+
+n = nrow(df)
+dofm1 = 2
+dofm2 = 3
+Ddof= dofm2-dofm1
+dofe1 = n - dofm1
+dofe2 = n - dofm2
+dofe1; dofe2; Ddof
+```
+
+8. Calculate SSE1/dofe1 and SSE2/dofe2.  Which model appears to be better (by this metric)?
+
+```{r}
+SSE1/dofe1
+SSE2/dofe2
+
+```
+
+9. Calculate the ANOVA F-ratio:  F = (DSSE/Ddof)/(SSE2/dofe2).
+
+```{r}
+F = (DSSE/Ddof)/(SSE2/dofe2)
+F
+```
+
+10. Perform an F-test with the appropriate numbers of freedom to calculate a p-value: Ddof for the numerator, and dofe2 for the denominator.  (This tells you the probability of obtaining a reduction in SSE as larger or larger than DSSE by chance if the simpler model is the correct one.)  Remember that model-choice F-tests are almost always right-tailed.
+
+```{r}
+1-pf(F, Ddof, dofe2)
+
+
+```
+
+11. Check your results for #4 through #10 above using the shortcut function `anova()`.
+
+```{r}
+anova(model1, model2)
+
+```
+
+12. Compare the Akaike information criteria of the two models using `AIC()`.  Does this agree with the conclusion from the F-test (ANOVA) result?
+
+```{r}
+AIC1 = AIC(model1)
+AIC2 = AIC(model2)
+AIC1
+AIC2
+```
+
+13. Calculate the relative likelihood ratio, exp((AIC2-AIC1)/2).  Based on this, about how likely is it that Model 1 is actually the correct one, assuming that one of the two models is right and given no additional prior knowledge?   (Divide the relative likelihood of Model 1 by the sum of the relative likelihoods for both models.)
+
+```{r}
+likelihood = exp((AIC2-AIC1)/2)
+likelihood
+```
+```{r }
+likelihood/(1+likelihood)
+
+```
+
+14. Compare the Bayesian information criteria of the two models using `BIC()` and decide which model is better.  Does this agree with the conclusions from AIC and from ANOVA?
+
+```{r}
+bic1 = BIC(model1)
+
+bic1
+
+```
+
+```{r}
+bic2 = BIC(model2)
+bic2
+```
+******
+
+## ANCOVA on Covariant Data
+
+The data in police.csv are a (simulated) data set showing the number of crimes committed in individual neighbourhoods within several study zones in a city, versus the police presence in those same neighbourhoods.
+
+15. Load the data in from disk and plot crime (y-axis) against police presence (x-axis), colour-coded by zone.
+
+```{r}
+df_police=read.csv('police.csv', as.is=FALSE)
+head(df_police)
+
+```
+```{r }
+plot(df_police$police, df_police$crime, bg=df_police$zone, pch=21)
+
+
+```
+16. Fit a simple linear model for crime as a function of police (ignore zones).  Examine the linear model summary.  What would you conclude about the relation between police and crime based on only this information?
+
+```{r}
+
+m1= lm(df_police$crime ~ df_police$police)
+summary(m1)
+```
+
+17. Now fit a fully interacting model of crime as a function of police and zone.  Use `summary.aov()` to perform an ANOVA analysis and determine whether the interactions are really needed.
+
+```{r}
+m2=lm(df_police$crime ~ df_police$police*df_police$zone)
+
+summary.aov(m2)
+```
+
+18. Remove the interactions and fit an additive-only linear model.  Examine the linear model summary.  Now what would you conclude about the relation between police and crime?
+
+```{r}
+m3=lm(df_police$crime ~ df_police$police+df_police$zone)
+summary(m3)
+```
+
+******
+
+## Multiple Regression: Artificial Data
+
+A fake multi-parameter data set (similar to the demonstration set) is available in multireg2.csv.
+
+19. Load this in from disk and use `summary()` and/or `head()` to briefly investigate the data set.
+
+```{r}
+df_multipar=read.csv('multireg2.csv')
+summary(df_multipar)
+
+```
+```{r}
+head(df_multipar)
+```
+
+20. Based on what you see in #19, edit the data frame by removing (dropping) any columns that are not likely to be useful for a multiple regression model.  (Use `subset` or another method of your choice.)
+
+```{r}
+df_multipar=subset(df_multipar, select = -c( j, k))
+
+df_multipar
+```
+```{r}
+df_multipar=within(df_multipar, rm(id))
+head(df_multipar)
+```
+21. Produce a `pairs()` plot of the remaining columns.  Make sure you can interpret all the panels.  (Note: you may need to change the plot margins to display the output efficiently.)
+
+```{r}
+
+pairs(df_multipar,pch='.')
+pairs(df,pch='.',panel=panel.smooth)
+
+
+
+```
+```{r}
+png('pairs.png', width=1500, height=1500)
+pairs(df)
+dev.off()
+```
+22. Fit a multiple regression for y as a function of all the remaining parameters simultaneously, including interactions up to two-way.  Examine its summary and check the values of RSE, $R^2$, adjusted $R^2$, and AIC.
+
+```{r}
+m4=lm(y~.*., data=df_multipar )
+
+summary(m4)
+```
+```{r }
+AIC(m4)
+```
+
+23. Perform a (single) stepwise regression simplification with `step()` to simplify the model.  (You should probably specify `trace=0` to reduce output to the console.)  Examine the`summary` of the simplified model and check the RSE, $R^2$, adjusted $R^2$, and AIC.
+
+```{r}
+m5 = step(m4)
+m5 = step(m4, trace=0)
+summary(m5)
+
+
+```
+```{r }
+AIC(m5)
+```
+24. Simplify the model further by removing some additional interactions of low significance out of the linear model using `update()`.  Give final estimates of RSE, $R^2$, adjusted $R^2$, and AIC.
+
+```{r}
+
+m6 = m5
+m6 = update(m6,~.-c:g)
+
+summary(m6)
+
+
+
+```
+
+```{r }
+AIC(m6)
+```
+******
+
+## Multiple Regression: Real Data
+
+Next consider some real data on driving fatalities in the United States during the mid-1980's.  This is available in fatality.csv.  The columns are:
+
+state: state ID code  
+year: year  
+mrall: traffic fatality rate (deaths per 10000)  
+beertax: tax on case of beer  
+mlda: minimum legal drinking age  
+jaild: mandatory jail sentence (yes/no)  
+comserd: mandatory community service (yes/no)  
+vmiles: average miles per driver  
+unrate: unemployment rate  
+perinc: per capita personal income  
+
+This data set has some pseudoreplication features (repeat measurements in time as well as spatial/geographical effects), so significance statements should be treated with great care, but it still represents a useful attempt to put linear models in to practice.
+
+
+25. Load the data from disk.  Convert the "state" numeric code to a factor.
+
+```{r}
+df_fat=read.csv('fatality.csv')
+df_fat
+```
+```{r}
+state=as.factor(df_fat$state)
+```
+26. Make a pairs plot of all the continuous response and explanatory variables: mrall, beertax, mlda, vmiles, unrate, perinc.  (Define a new dataframe containing only these variables, or use numerical subscripts on the columns of the original dataframe.)  Can you spot the outlier in this data set?
+
+```{r}
+
+df_fatnew=df_fat[c('mrall','beertax', 'mlda', 'vmiles', 'unrate', 'perinc')]
+df_fatnew
+
+```
+```{r}
+pairs(df_fatnew, panel=panel.smooth)
+```
+27. Identify the outlier row and delete it from the data frame using a logical operator, or alternatively a negative element subscript.  (You may wish to save the modified data frame to a new variable, in case you make a mistake.)  Make another pairs plot.  Use the `panel=panel.smooth` option to visualize possible correlations.
+
+```{r}
+
+df_fatnew1=df_fatnew[df_fatnew$vmiles<20,]
+
+pairs(df_fatnew1[,c('mrall','beertax', 'mlda', 'vmiles', 'unrate', 'perinc')], panel=panel.smooth)
+```
+
+28. Examine the top row of the pairs plot.  Considering individual variables in isolation, how do each of the following variables seem to relate to traffic mortality (increase, decrease, no obvious effect?)
+	a. Tax rate on beer  
+	b. Drinking age  
+	c. Vehicle miles driven  
+	d. Unemployment rate  
+	e. Per capita income  
+
+
+29. Fit a linear model on the (outlier-cleaned) dataset.  Do not consider interactions (which would be very difficult to interpret in this case).  Do consider state and year (while this drastically reduces the degrees of freedom, it removes the pseudoreplication by only considering changes in mortality in response to changes in state policies over this period, with the national trend removed).
+
+```{r}
+#dmodel = lm(mrall~state+year+beertax+mlda+jaild+comserd+vmiles+unrate+perinc, data=df_fatnew1)
+#summary.aov(dmodel)
+# I tried this but I did not figure why it is not working for me so that is why I left th 31 and 32 questions.
+```
+
+
+30. Simplify the model by successive updates or stepwise regression.
+
+```{r}
+```
+
+31. Look at the final linear model summary, and examine the signs and t-significances of the remaining terms.  How do the following seem to correlate with traffic mortality?
+	a. Tax rate on beer  
+	b. Drinking age  
+	c. Vehicle miles driven  
+	d. Unemployment rate  
+	e. Per capita income  
+	f. Mandatory jail sentence (=yes)  
+	g. Mandatory community service (=yes)  
+
+```{r}
+```
+
+32. Compare the conclusions of #31(a-e) to #28.  Are there any differences?  Can you explain why this is?
+

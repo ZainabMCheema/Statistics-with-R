@@ -1,0 +1,182 @@
+---
+title: "Practice Test 1"
+output:
+  word_document: default
+  html_document: default
+date: "2023-12-19"
+---
+problem -1
+```{r }
+1/2^12
+
+```
+
+```{r }
+choose(12,3)*1/2^12
+```
+
+```{r }
+choose(12, 6)*1/2^12
+```
+```{r }
+choose(12, 2)*1/2^12
+
+```
+
+```{r }
+
+head= 2
+tails=10
+flips=12
+p= pbinom(head, flips, 0.5)+pbinom(tails, flips, 0.5, lower.tail = FALSE)
+p
+```
+
+```{r}
+choose(12, 10)*1/2^12+choose(12,2)*1/2^12
+
+```
+
+ In a 40 game season, what is the probability of a certain season outcome?
+ 30 are against class A teams which you have a .4probability of winning and .6 of losing.
+ 10 are against class B teams which you have a .7 probability of winning and .3 of losing.
+The season schedule is completely random in regards to what type of team you play.
+
+What is the probability that you:
+win 20 games against class A teams (and lose 10 games)
+AND win 3 games against class B teams (and lose 7games)
+
+```{r}
+dbinom(20, 30, 0.4)* dbinom( 3, 10, 0.7)
+```
+```{r }
+dbinom(20, 30, 0.4)
+dbinom( 3, 10, 0.7)
+
+```
+
+Problem 2: Runner’s Regimen
+A group of 50 runners are enrolled in a study on the effects of taking a particular supplement on their fitness. During March, they are asked to run a 5-km run on 10 separate occassions and record their times, which were averaged together and the value recorded in the file runners.csv. The supplement, or a placebo, is taken daily during April. In May, they are again asked to run a 5-km run on 10 occasions and record their average times
+
+1. Did the times of runners in the placebo group become significantly shorter, or significantly longer,
+between March and May? Provide a p-value.
+```{r }
+df_run= read.csv('runners.csv')
+#head(df_run)
+unique(df_run$group)
+str(df_run)
+```
+```{r }
+df_pla = df_run[df_run$group=="placebo", ]
+results_pla =t.test(df_pla$avg.time.march, df_pla$avg.time.may, paired= TRUE)
+results_pla$p.value
+
+#To change the format of value
+ #format(results_pla$p.value, scientific = FALSE)
+```
+```{r }
+march =mean(df_pla$avg.time.march)
+may=mean(df_pla$avg.time.may)
+may-march>0
+```
+This code compares the means of run times in March and May. If the difference is positive, it means the May run times are longer on average. If negative, the May run times are shorter on average.
+
+
+2. Did the times of runners taking the supplement become significantly shorter, or significantly longer,
+between March and May? Provide a p-value. [3]
+
+```{r }
+df_spl = df_run[df_run$group=="supplement", ]
+results_spl =t.test(df_spl$avg.time.march, df_spl$avg.time.may, paired= TRUE)
+results_spl$p.value
+
+```
+```{r }
+slp_march=mean(df_spl$avg.time.march)
+slp_may= mean(df_spl$avg.time.may)
+slp_may-slp_march >0
+```
+
+Can you conclude that the supplement was effective at improving run times, in comparison to the placebo? Provide a p-value.
+```{r }
+time_pla = df_pla$avg.time.may-df_pla$avg.time.march
+time_spl= df_spl$avg.time.may-df_spl$avg.time.march
+t= t.test(time_pla, time_spl)
+t$p.value
+```
+4. Calculate the sample interquartile range of run times for all runners in March.
+
+```{r }
+time_march=df_run$avg.time.march
+q1=quantile(time_march, 0.25)
+q3=quantile(time_march, 0.75)
+IQR=q3-q1
+IQR
+```
+```{r }
+# second method which is more easy 
+IQR(time_march)
+
+```
+5. Use a percentile bootstrap (or another bootstrap) to provide a 95% confidence interval on the population interquartile range for all runners in March. Use at least 10000 bootstrap iterations.
+
+```{r }
+#function to calculate IQR
+calculate_iqr= function(data, indices) {
+  sample_data = data[indices]
+  return(IQR(sample_data))
+}
+library(boot)
+result = boot(time_march, statistic = calculate_iqr, R = 10000)
+conf = boot.ci(result, type = "perc", conf = 0.95)
+conf
+```
+Problem 3: Tomato Farmer
+1. Use a multi-factor ANOVA to investigate the impact of growing method (and greenhouse) on yield.Start with a general model including all explanatory variables and (two-way) interactions between variable pairs, and simplify it by removing unneeded parameters. After simplification, write explicitly which variables are significant and which variable-pair interactions are significant. You may assume that errors are distributed normally.
+```{r }
+df_tom=read.csv('tomato.csv')
+str(df_tom)
+```
+Q-1
+```{r }
+firstmodel=lm(yield~ .*.,  data=df_tom)
+anova(firstmodel)
+```
+
+```{r }
+step(firstmodel, trace=0)
+m2 = lm(yield ~ greenhouse + wateringfreq + wateringtype + insecticide + fertilizer + greenhouse:insecticide, data = df_tom)
+```
+Q-2
+```{r }
+m3 = lm( yield ~ greenhouse + wateringfreq + wateringtype + insecticide + fertilizer,  data = df_tom)
+anova(m3)$'Pr(>F)'
+```
+Q-3
+````{r}
+pre_yield= predict(m3, type = 'response') 
+max_row = which.max(pre_yield)
+fact = df_tom[max_row, c('greenhouse', 'wateringfreq', 'wateringtype', 'insecticide', 'fertilizer', 'yield')]
+fact
+```
+Q-4
+```{r }
+# Predict yield for the recommended regime
+#Plant_yield =mean(predict(m3,  newdata = fact, type = "response"))
+#Plant_yield
+
+mean(predict(m2, list(greenhouse = 'F', wateringfreq = '72hours', wateringtype = 'drip', insecticide = 'bifenthrin', fertilizer='2-3-1'), type='response'))
+```
+```{r }
+
+cal_predct = function(data, indices) {
+  sample_data = data[indices, ] 
+  predict(m2, newdata = sample_data, type = "response") 
+}
+library(boot)
+result = boot(df_tom, statistic = cal_predct, R = 1000)
+conf = boot.ci(result, type = "perc", conf = 0.95)
+conf
+```
+
+

@@ -1,0 +1,242 @@
+---
+title: "Untitled"
+output: html_document
+date: "2023-12-27"
+---
+**Problem 1. Practical Probabilities**
+The lengths of members of a prized fish species are thought to be normally distributed. The distribution of lengths has a mean of 20cm with a standard deviation of 3cm.
+Q-1
+What is the probability that a randomly-chosen fish of this species has a length between 20 cm and 27
+cm
+```{r }
+mean=20
+sd=3
+pnorm(27, mean=mean, sd=sd)-pnorm(20, mean=mean, sd=sd)
+```
+Q-2 Two fish of this species are caught independently. What is the probability that both of them are shorter than 16cm?
+one pnorm () will calculate the probability for 1 fish shorter then 16 cm, the calculate the it for two independent fist , i take product .
+```{r }
+pnorm(16, mean=mean, sd=sd)*pnorm(16, mean=mean, sd=sd)
+```
+Q-3 
+Forty percent of all fish of this species have lengths greater than 20cm but less than X cm. What is X.
+
+```{r }
+p=pnorm(20, mean=mean, sd=sd)+0.4
+qnorm(p, mean=mean, sd=sd)
+```   
+Q-4 In a commercial catch of 10000 fish, how many (on average) do you expect to have a length greater than 30 cm? (You do not need to supply a confidence interval.)
+```{r }
+n=10000
+prob=1-pnorm(30, mean=mean, sd=sd)  # this line calculate the probability of having fish greater then 30
+prob*n
+```     
+From historical records stretching back 1000 years, a volcano is known to have erupted on sixteen occasions.The eruption times are thought to be completely random and unpredictable, and the average frequency of eruptions is not changing with time.
+Q-5 What is the long-term average rate of eruptions, in units of eruptions per century (per 100 years)?
+Provide an estimated value and an “exact” confidence interval
+
+given information=   n= 10000 year,   erupted :16th 
+eruptions in this case occurred in a fixed interval of time interval so it is passion distribution 
+```{r }
+n = 1000
+eru=16
+avg = eru/n
+avg*100
+``` 
+
+```{r }
+n = 10   # centuries in 1000 years
+k = 16
+poisson.test(16, conf.level=0.95)$conf.int[1:2]/10
+
+```
+Q-6
+Assume the estimated average rate you calculated in part 5 is correct. What is the probability that the next 100 years will pass without an eruption from this volcano? 
+using passion probbaility formula
+
+```{r} 
+lemda= 1.6
+x= 0  # as no eruption in next years
+prob= exp(-1.6)*(1.6^x)/ factorial(x)
+prob
+```
+
+Q-7: Again assuming the average rate from part 4, what is the probability that the volcano will erupt two or more times in the next 200 years?
+
+```{r }
+New_lemda= 1.6*2
+prob1=exp(-New_lemda)*(New_lemda^2)/ factorial(2)
+1-((1-prob1)*prob)
+
+```
+Q-8
+A university classroom has 17 students. Six of these students are frequent readers of mystery novels. According to a national poll, 10% of the population are frequent readers of mystery novels.Can you rule out the hypothesis that students in the classroom are randomly drawn from the national population, as far as interest in mystery novels is concerned? Provide a p-value. (Use an exact method to calculate the p-value for full credit, or an approximate method for partial credit.)
+```{r }
+# Define the parameters
+n =17  
+x = 6
+p = 0.10
+result = binom.test(x, n, p = p, alternative = "two.sided")       # one method proportion test
+result$p.value
+#prop.test(x, n, p=p, alternative = "two.sided", correct = TRUE)  # 2nd  method proportion test
+```
+**Problem 2: Classroom Demographics**
+The file classroom.csv contains data from a sample of students in a hypothetical classroom. Heights are in centimetres, weights are in kilograms, and ages are in years.
+
+Q-1 Determine whether male and female students (as a population) differ in average height. Provide a
+p-value.
+```{r }
+class_df= read.csv('classroom.csv')
+str(class_df)
+
+```
+```{r }
+test=t.test(Height~Gender, data=class_df)  #t test use to compare the avg btw two groups.
+test$p.value
+```
+Q-2
+Determine whether male and female students (as a population) differ in average weight. Provide a
+p-value. 
+```{r }
+test_2=t.test(Weight~Gender, data=class_df)  #t test use to compare the avg btw two groups.
+test_2$p.value
+
+```
+Q-3
+Calculate the Pearson correlation coefficient between height and weight for male students.
+```{r}
+df_male= class_df[class_df$Gender=='Male', ]
+cor(df_male$Height, df_male$Weight, method='pearson')
+
+```
+Q-4 Calculate the Spearman correlation coefficient between height and weight for students (of either gender) under the age of 25.
+```{r }
+df_avg_25= df_male[df_male$Age < 25,]
+
+cor(df_avg_25$Height, df_avg_25$Weight, method='spearman')
+
+```
+Assess whether male and female students of similar height differ significantly in average weight (as a population), ignoring all other variables. Provide a p-value. (You may assume that the relation is linear, and that weight increases with height in the same way for both genders.) 
+Q-5
+```{r }
+male_data = subset(class_df, Gender == "Male")
+female_data = subset(class_df, Gender == "Female")
+t_test_r = t.test(male_data$Weight, female_data$Weight)
+t_test_r$p.value
+
+```
+```{r}
+library(dplyr)
+
+# Assuming 'class_df' is your dataset
+
+# Group data by Gender and Height, calculate average weight for each group
+grouped_data <- class_df %>%
+  group_by(Gender, Height) %>%
+  summarise(avg_weight = mean(Weight))
+
+# Filter and match similar heights for male and female
+male_avg_weights <- grouped_data %>%
+  filter(Gender == "Male") %>%
+  rename(male_height = Height, male_weight = avg_weight)
+
+female_avg_weights <- grouped_data %>%
+  filter(Gender == "Female") %>%
+  rename(female_height = Height, female_weight = avg_weight)
+
+# Match male and female data based on similar heights
+matched_data <- merge(male_avg_weights, female_avg_weights, by = NULL, allow.cartesian = TRUE)
+matched_data <- matched_data[abs(matched_data$male_height - matched_data$female_height) < 5, ] # Adjust the threshold for "similar" heights
+
+# Perform a paired t-test on the matched weights
+t_test_result <- t.test(matched_data$male_weight, matched_data$female_weight, paired = TRUE)
+
+# Extract the p-value
+p_value <- t_test_result$p.value
+
+# Print the p-value
+print(paste("The p-value for the paired t-test is:", p_value))
+
+```
+```{r}
+male_avg_weights
+```
+
+```{r }
+plot(male_data$Height, male_data$Weight, col = 'blue', pch = 16, xlab = 'Height', ylab = 'Weight')
+points(female_data$Height, female_data$Weight, col = 'red', pch = 17)
+legend('topright', legend = c('Male', 'Female'), col = c('blue', 'red'), pch = c(16, 17))
+
+```
+Problem 3: Website Redesign
+company that sells products by mail is experimenting with a redesign for its website. Visitors are randomly shown existing version A, or one of five proposed redeveloped versions B1, B2, B3, B4, or B5. Information is
+collected about how long they spend on the website in seconds), whether they buy anything (Y = purchase,
+N = no purchase), and if so how much they spend (in £).
+Q-1  Produce a count table to summarize how many visitors from each of the six groups made, or did not
+make, a purchase.
+
+```{r }
+df_web= read.csv('website.csv')
+head(df_web)
+```
+
+```{r}
+summary = table(df_web$design, df_web$purchase)
+summary 
+
+```
+Q-2
+
+```{r }
+chisq_result = chisq.test(summary)
+chisq_result
+```
+
+```{r }
+qchisq(0.05, 5, lower.tail=TRUE)
+
+```
+```{r }
+groups= unique(df_web$design)  
+purchase_rates = numeric(length(groups))
+lower_ci = numeric(length(groups))
+upper_ci = numeric(length(groups))
+
+for (i in 1:length(groups)) {
+  group_data = subset(df_web, design == groups[i])
+  purchases = sum(group_data$purchase == "Y")
+  total_obs = nrow(group_data)
+  purchase_rate =purchases/total_obs
+  conf_interval = binom.test(purchases, total_obs)$conf.int
+  
+  # Store results
+  purchase_rates[i]= purchase_rate
+  lower_ci[i] = conf_interval[1]
+  upper_ci[i] = conf_interval[2]
+}
+result_df = data.frame(Group = groups, Probability = purchase_rates,
+                        Lower_CI = lower_ci, Upper_CI = upper_ci)
+print(result_df)
+```
+```{r } 
+boxplot(Probability~ Group, data = result_df, 
+        main = "Purchase Rates by Group",
+        xlab = "Group", ylab = "Purchase Rate")
+
+# Add error bars for confidence intervals
+segments(
+  x0 = as.numeric(factor(result_df$Group)),
+  y0 = result_df$Lower_CI,
+  x1 = as.numeric(factor(result_df$Group)),
+  y1 = result_df$Upper_CI,
+  lwd = 2
+)
+```
+
+```{r }
+library('ggplot2')
+ggplot(result_df, aes(x = Group, y =pProbability)) +
+  geom_boxplot() +
+  geom_errorbar(aes(ymin = lower_ci, ymax = upper_ci), width = 0.2) +
+  labs(x = 'groups', y = 'purchase rate') 
+```

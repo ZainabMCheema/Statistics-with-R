@@ -1,0 +1,438 @@
+---
+title: 'Computer Lab 5: Two-Sample Comparisons'
+output:
+  pdf_document: default
+  word_document: default
+---
+
+Complete all of the following questions, adding your inputs as code chunks (enclose within triple accent marks) within Rmarkdown.
+
+The exercises are not marked and will not be factored into your course grade, but it is important to complete them to make sure you have the skills to answer assessment questions.  You may consult any resource, including other students and the instructor.  Please Knit this document to a PDF and upload your work via Canvas at the end of the session.  Solutions will be posted for you to check your own answers.
+
+******
+
+## Experimenting with the t and F distributions
+
+1.  Create a new function to generate t values from a two-sample difference of means of equal variance, rather than a one-sample mean.  Call the new function tsimulation2 and work by copying, pasting, and modifying the code from tsimulation (find it on Canvas).  Make the following changes to the copied tsimulation code to turn it into tsimulation2:
+
+    a. Change the function name to tsimulation2.
+    b. Instead of accepting a single sample size N, accept two sample sizes: Nx and Ny.  (The other arguments it accepts are the same as for tsimulation.)
+    c. Instead of generating a single sample of length N (stored in vector x), generate two samples:  one of length Nx (stored in vector x), another of length Ny (stored in vector y).
+    d. Use the two-sample, common-variance definition of t from lecture (Student's Two-sample t-test): the numerator is the difference of the two sample means; the denominator (SE) is the pooled sample variance times the square root of the harmonic mean of Nx and Ny.  (See lecture slide 45.)
+
+(Everything else should work the same way as for tsimulation.  Note that x and y are sampled from the same distribution under the null hypothesis.)
+
+Make sure your script compiles, and confirm that your function runs and generates a vector of length ntrials when called.
+
+```{r}
+tsimulation2 = function(Nx, Ny, ntrials, mu=0, sigma=1) {
+  t.trials = numeric(ntrials)
+  for (i in 1:ntrials) {
+    x = rnorm(Nx, mean=mu, sd=sigma)
+    y = rnorm(Ny, mean=mu, sd=sigma)
+    diff = (mean(x)-mean(y))
+    sp = sqrt(((Nx-1)*sd(x)^2+(Ny-1)*sd(y)^2)/(Nx+Ny-2))
+    se=sp*sqrt(1/Nx+1/Ny)
+    t = diff / se
+    t.trials[i] = t
+  }
+  return(t.trials)
+}
+
+```
+
+2. Verify visually that samples of t drawn using this simulation follow a Student t distribution with Nx+Ny-2 degrees of freedom.  Do this by making a histogram of the results of t from an example simulation and overplotting the appropriate theoretical t distribution (use `dt` in R).
+
+```{r}
+Nx = 10
+Ny=10
+simt = tsimulation2(Nx, Ny,1000)
+hist(simt,breaks=seq(floor(min(simt)),ceiling(max(simt)),0.1),xlim=c(-3,3),
+     freq=FALSE,col='yellow')
+tplot = seq(-10,10,0.1)
+lines(tplot, dt(tplot,Nx+Ny-2))
+
+
+```
+
+3. Write yet another function called fsimulation.  Begin with the code from your function tsimulation2 (copy and paste to a new function).  All the arguments it accepts should be the same as for tsimulation2 (Nx, Ny, mu, sigma, ntrials).  Make the following changes to change the code into fsimulation:  
+
+    a. The new function name is fsimulation.
+    b. Instead of calculating the two-sample t inside the loop, instead calculate F (the ratio of the two sample variances). 
+    c. Store it in the vector F.trials (replacing t.trials) and return F.trials at the end.  
+
+Make sure your script compiles and confirm that your function runs and generates a vector of length ntrials.
+
+```{r}
+fsimulation = function(Nx, Ny, ntrials, mu=0, sigma=1) {
+  f.trials = numeric(ntrials)
+  for (i in 1:ntrials) {
+    x = rnorm(Nx, mean=mu, sd=sigma)
+    y = rnorm(Ny, mean=mu, sd=sigma)
+    
+    f = sd(x)^2/sd(y)^2
+    f.trials[i] = f
+  }
+  return(f.trials)
+}
+
+```
+4. Verify visually that trials of F drawn using this simulation follow an F distribution with nx-1 and ny-1 degrees of freedom by overplotting the appropriate F-distribution density function (`df` in R).
+
+```{r}
+Nx = 10
+Ny=10
+simt = fsimulation(Nx, Ny,1000)
+hist(simt,breaks=seq(floor(min(simt)),ceiling(max(simt)),0.1),xlim=c(-3,3),
+     freq=FALSE,col='orange')
+fplot = seq(-10,10,0.1)
+lines(fplot, df(fplot, Nx-1, Ny-1))
+
+
+```
+5. (Optional) Perform a logarithm transform of the trial F values from #4 (that is, create a new vector containing the logarithms of these values).  Plot a histogram of these values.  How does the skewness of this distribution compare to that of #4?   Can you explain this?  (A visual, qualitative assessment is fine.) 
+
+```{r}
+fsimulation2 = function(Nx, Ny, ntrials, mu=0, sigma=1) {
+  f.trials = numeric(ntrials)
+  for (i in 1:ntrials) {
+    x = rnorm(Nx, mean=mu, sd=sigma)
+    y = rnorm(Ny, mean=mu, sd=sigma)
+    
+    f = log(sd(x)^2/sd(y)^2)
+    f.trials[i] = f
+  }
+  return(f.trials)
+}
+
+Nx = 10
+Ny=10
+simt = fsimulation2(Nx, Ny,1000)
+hist(simt,breaks=seq(floor(min(simt)),ceiling(max(simt)),0.1),xlim=c(-3,3),
+     freq=FALSE,col='orange')
+fplot = seq(-10,10,0.1)
+lines(fplot, df(fplot, Nx-1, Ny-1))
+```
+******
+
+## Comparing two normally-distributed samples
+
+Suppose you are studying the effects of economic background on growth in schoolchildren.  You collect data on the heights of 4th graders in two regions: a poor region and a wealthy region.  These data are available as schools.csv.
+
+6. Extract the heights of the two samples ("poor" and "wealthy" students) into separate vectors, and verify that both are consistent with a normal distribution using a Shapiro-Wilk test (`shapiro.test` in R).
+```{r}
+df=read.csv('schools.csv')
+df
+```
+
+```{r}
+
+poor_height = subset(df, region=='poor', select=height)
+wealthy_height = subset(df, region=='wealthy', select=height)
+```
+
+```{r}
+set.seed(0)
+shapiro.test(poor_height$height)
+
+shapiro.test(wealthy_height$height)
+
+```
+7. Produce a boxplot comparing the heights of the two samples.  Use the `notch=TRUE` option as a visual indicator of possible differences in means.
+
+```{r}
+poorh= poor_height$height
+wh= wealthy_height$height
+par(mfrow=c(1,2))
+boxplot(poorh, notch=TRUE)
+
+boxplot(wh, notch=TRUE)
+```
+
+8. Verify that the variances of the two samples are consistent.  Do this with an F-test, doing the calculation yourself.  The steps are:
+
+    a. Compute the two variances, their ratio (F), and the degrees of freedom for both.
+    b. Calculate the (two-tailed) p-value for this ratio using the F-distribution (pf in R)
+
+```{r}
+sd1= sd(wealthy_height$height)
+sd2=sd(poor_height$height)
+F = sd1^2/sd2^2
+df1= (length(wealthy_height$height)-1)
+df2= (length(poor_height$height)-1)
+
+2*(1-pf(F,df1,df2))
+
+```
+
+9. Use the convenience tool in R for F-tests (`var.test`) to confirm your number above.
+
+```{r}
+var.test(wealthy_height$height, poor_height$height)
+```
+
+10. Check if the means are consistent using a Student's t-test, assuming equal variance.  Do this **both** by calculating the t-score yourself (you can reuse the equations for sp and t from #1) and its appropriate p-value, **and** with the R convenience tool `t.test`, setting `var.equal=TRUE` to indicate that you are confident the variances are the same.
+```{r}
+poor.h= poor_height$height
+wealthy.h= wealthy_height$height
+mean.p=mean(poor.h)
+mean.w=mean(wealthy.h)
+sd.p=sd(poor.h)
+sd.w=sd(wealthy.h)
+n.p=length(poor.h)
+n.w= length(wealthy.h)
+sp = sqrt( ((n.p-1)*sd.p^2 + (n.w-1)*sd.w^2 ) / (n.p+n.w-2) )
+t = (mean.p-mean.w) / (sp*sqrt(1/n.p+1/n.w))
+
+2*(1-pt(abs(t),n.p+n.w-2))
+```
+
+```{r}
+t.test(poor_height$height, wealthy_height$height, var.equal=TRUE) 
+
+```
+
+11. What if you weren't confident that the variances were the same?  Repeat the `t.test` calculation above with `var.equal=FALSE`.
+```{r}
+
+```
+**P value is same in both ways**
+
+******
+
+## Comparing two arbitrarily-distributed samples
+
+The file moore.csv contains results from a study on social conformity: each of 45 subjects was paired with a partner of "high" or "low" apparent status and the extent to which each subject "conformed" with their partner's opinions was assessed.  (Moore & Krupat 1971, Sociometry, 34, 122).
+
+12. Load in the CSV file from disk.  Within the data frame, the conformity score is saved as the variable "conformity" and the partner social status is saved as "partner.status".   Produce a summary table of the data.
+
+```{r}
+df_moore= read.csv('moore.csv')
+summary(df_moore)
+```
+
+13. Produce a box-plot of partner status (high/low) versus conformity.  Does it look like there is a significant difference?
+
+```{r}
+par(mfrow=c(1,1))
+#plot(df_moore$partner.status, df_moore$conformity, xlab='partner_status', ylab='confromity')
+
+```
+
+**The above plot function is showing error, i have checked the solution, but still not working for me**
+
+**addition I run the following lines to check the na values, infinte values. howvere the plot function still not worked for me**
+```{r}
+any(is.infinite(df_moore$partner.status))
+any(is.infinite(df_moore$conformity))
+
+any(is.na(df_moore$partner.status))
+any(is.na(df_moore$conformity))
+df_moore <- na.omit(df_moore)
+
+```
+
+
+14. Check if the "conformity" scores are normal with a Shapiro-Wilk test.  Examine the entire data set, as well as the two groups ("high" partner status and "low" partner status) individually.
+
+```{r}
+shapiro.test(df_moore$conformity)
+```   
+
+
+```{r}   
+high=df_moore$conformity[df_moore$partner.status=='high']
+shapiro.test(high)
+``` 
+
+```{r}  
+low=df_moore$conformity[df_moore$partner.status=='low']
+shapiro.test(low)
+```
+
+15. Formally test whether or not there is a difference in the centres of the two distributions with a Wilcoxon Rank-Sum test.  You can use the R convenience tool `wilcox.test`.  (Note: you may initially get a warning message that may conceal the result---just run the task again if this happens.)
+
+```{r}
+wilcox.test(high, low)
+```
+
+16. Plot the ECDFs of the two samples (put them both on the same plot in two different colours).  Include a legend.
+
+```{r}
+xlim = c(min(df_moore$conformity)-1, max(df_moore$conformity)+1) 
+var_plot = c(xlim[1], sort(df_moore$conformity), xlim[2]) 
+plot(var_plot,ecdf(high)(var_plot),typ='s',col='orange',lwd=2,ylab='ECDF',xlim=xlim)
+lines(var_plot,ecdf(low)(var_plot),typ='s',col='brown',lwd=2)
+legend('topleft',legend=c('High','Low'),col=c('orange','brown'),lwd=2)
+```
+
+17. Formally test whether or not there is a difference between the two distributions with a Kolmogorov-Smirnov test.  You can use the R convenience tool `ks.test`.   Can you confirm the value of the K-S statistic D from looking at the plot from #16?
+
+```{r}
+ks.test(high, low)
+
+```
+
+
+18. Formally test whether or not there is a difference between the two distributions with an Anderson-Darling test.  You can use the R convenience tool `ad_test`.  (You will have to load the R library twosamples.)
+
+```{r}
+#install.packages('twosamples')
+library(twosamples)
+ad_test(high,low)
+```
+
+******
+
+## Paired comparisons
+
+Suppose 18 individuals are enrolled in a weight-loss programme.  Their weights are measured before the program, and after the program.  The values (in kg) are provided in the file weightloss.csv.
+
+19. Calculate the amount of weight loss for each subject, and then calculate the single-sample t-score and corresponding p-value from the resulting difference vector (you can use the convenience function `t.test` or just do it the long way).  Is the program effective (provides significant weight loss) at alpha=0.05?    (Hint: given the phrasing of the question, is this a one-sided or two-sided test?)
+
+```{r}
+df2 = read.csv('weightloss.csv')
+loss = df2$weightbefore-df2$weightafter
+
+t.test(loss, alternative="greater")
+
+```
+
+20. Use the convenience tool `t.test` in R to perform a paired t-test directly on the two-sample data without calculating the differences yourself.  Make sure to set `paired=TRUE`, and also specify the `var.equal` and `alternative` arguments appropriately.  Confirm that the result is the same as from the test on the differences.
+
+```{r}
+before_w = df2$weightbefore
+after_w = df2$weightafter
+t.test(before_w, after_w, alternative="greater", var.equal=TRUE, paired=TRUE)
+
+```
+
+For comparison, see how the p-value changes for a variety of other tests: 
+
+21. Perform an unpaired Student's t-test (use `t.test` again but set `paired=FALSE`).
+
+```{r}
+t.test(before_w, after_w, alternative="greater", var.equal=TRUE, paired=FALSE)
+```
+
+22. Perform an unpaired, unequal variance Welch's t-test (set `var.equal=FALSE`).
+
+```{r}
+t.test(before_w, after_w, alternative="greater", var.equal=FALSE, paired=FALSE)
+
+```
+
+23. Perform a Wilcoxon rank-sum (Mann-Whitney) test (use `wilcox.test` with `paired=FALSE`).
+
+```{r}
+wilcox.test(before_w, after_w, alternative="greater", var.equal=TRUE, paired=FALSE)
+```
+
+24. Perform a Wilcoxon signed-rank test (use `wilcox.test` with `paired=TRUE`, or calculate the differences and use `wilcox.test` on the single sample of differences).
+
+```{r}
+wilcox.test(before_w, after_w, alternative="greater", var.equal=TRUE, paired=TRUE)
+
+```
+
+25. Perform a binomial test on the signs of differences.  (Use a logical expression, then `table` in R to convert to counts.  The convenience function is `binom.test`.)
+
+```{r}
+table((before_w-after_w) > 0)
+```
+
+```{r}
+binom.test(13,18,alternative="greater")
+```
+
+26. Review the p-values for #19-#25 above.  Why do some tests provide a significant result but not others?  Would you conclude that the program is effective or not?
+
+
+
+******
+
+## Categorical comparisons and contingency tables
+
+The columns colour1 and colour2 in the survey.csv file indicate the responses from this year's class regarding their colour preferences (red/green/blue for colour1 and black/white for colour2).  One might wonder whether colour preferences are correlated.
+
+27. Load in the raw data as a dataframe, and remove any lines with NA colour values if needed.  Make a 2x3 contingency table from the two colour columns and store it in the variable "O", the observations matrix. (Use `table` in R.)  Print it out.
+
+```{r}
+survey=read.csv('survey.csv',as.is=FALSE)
+head(survey)
+
+```
+
+```{r}
+O = table(survey$colour1, survey$colour2)
+O
+```
+
+
+
+28. Calculate the row totals and column totals for this matrix.  (Use the `apply` command in R.)
+
+```{r}
+apply(O,1,sum); apply(O,2,sum)
+```
+
+29. Calculate the row proportions and column proportions by dividing the answers from #28 by the sample size.
+
+```{r}
+n = sum(O)
+apply(O,1,sum)/n
+apply(O,2,sum)/n
+```
+
+30. Now calculate the expectation matrix E by taking the outer product of the row and column proportions (use `outer`), multiplied by n.
+
+```{r}
+row_frac = apply(O,1,sum)/n
+col_frac = apply(O,2,sum)/n
+E = outer(row_frac,col_frac)*n
+E
+```
+
+31. Calculate the difference between observed and expected counts O-E.  Do the differences suggest there might be a correlation?
+
+```{r}
+O-E
+```
+
+32. Calculate the matrix (O-E)^2/E.
+
+```{r}
+(O-E)^2/E
+```
+
+33. Calculate the sum (over all elements) of (O-E)^2/E and store the result in the new variable "chisq".
+
+```{r}
+chisq = sum((O-E)^2/E)
+chisq
+```
+
+34. Calculate the degrees of freedom of this analysis.  Use the formula from lecture: nu = (nrow-1)*(ncol-1).  Store it in the new variable "dof".
+
+```{r}
+dof=(3-1)*(2-1)
+```
+
+35. Calculate the p-value using the chi-square CDF function (`pchisq`) and your answers for #33 and #34 above.  (Note that chi-squared contingency tests are always one-sided, and pay attention to which side of the distribution you are on.)  Is there evidence for a significant correlation between colour and shade preference?
+
+```{r}
+1-pchisq(chisq,dof)
+```
+
+36. Use the R convenience function `chisq.test` on your observations matrix to check your answers from #33-35.
+
+```{r}
+chisq.test(O)
+```
+
+37.  Compare this with the result from Fisher's Exact Test (`fisher.test`).
+
+```{r}
+fisher.test(O)
+```
+

@@ -1,0 +1,252 @@
+---
+title: 'Computer Lab 10: Survival Analysis and Bayesian Inference'
+output:
+  pdf_document: default
+---
+
+Complete all of the following questions, adding your inputs as code chunks (enclose within triple accent marks) within Rmarkdown.
+
+The exercises are not marked and will not be factored into your course grade, but it is important to complete them to make sure you have the skills to answer assessment questions.  You may consult any resource, including other students and the instructor.  Please Knit this document to a PDF and upload your work via Canvas at the end of the session.  Solutions will be posted for you to check your own answers.
+
+******
+
+## Survival Analysis
+
+The data file aids.csv contains data on survival times for patients diagnosed with autoimmune deficiency syndrome (AIDS) in the 1980s in Australia.  The variables are:
+  state - Australian state
+  sex - sex (F or M)
+  diganosis - day of diagnosis (Julian day)
+  death - day of death (or last day of monitoring if patient did not die)
+  status - whether alive (A) or deceased (D) at the end of the study period
+  T.categ - Transmission category (how the patient became infected)
+  age - Age at diagnosis
+
+1. Load this file in from disk and produce a summary table.
+
+```{r}
+df=read.csv('aids.csv')
+head(df)
+```
+```{r }
+summary(df)
+```
+
+2. The "status" column distinguishes patients who passed away from patients who were still alive at the end of the study.  What proportion of patients died during the study?
+
+```{r}
+#str(df)
+
+result=subset(df, status=='D')
+prop_die=nrow(result)/length(df$status)
+prop_die
+```
+
+3. Calculate elapsed times in days by taking the difference of the day of "death" minus the day of diagnosis.  (For patients who actually died this is the survival time, for other patients it is the time until the end of the study).
+
+```{r}
+times = df$death-df$diag
+
+```
+
+4. Plot a histogram of all elapsed times.
+
+```{r}
+hist(times)
+```
+
+5. Plot the ECDF of all elapsed times.
+
+```{r}
+tplot = c(0,sort(times))
+plot(tplot,ecdf(times)(tplot),typ='s')
+```
+
+6. Create a numeric vector that is 0 for patients who are alive and 1 for patients who died.
+
+```{r}
+dead=as.numeric(df$status== 'D')
+```
+
+7. Create a survival object using `Surv()` combining the elapsed times and the numeric survival status.  (You will need to load the survival library).
+
+```{r}
+library(survival)
+survival = Surv(times, dead)
+```
+
+8. Calculate and plot the Kaplan-Maier estimator of the survivorship curve using `survfit()` (treat all participants together as a single group).  
+
+```{r}
+survivalkm = survfit(survival~1)
+plot(survivalkm)
+```
+
+9. Taking into account censorship, what is the median survival time after diagnosis (in days) for these patients?
+
+```{r}
+survivalkm
+```
+
+10. Based on this plot, what is the approximate survival fraction for AIDS patients 6 years (~2200 days) after diagnosis?  What is the expected fatality rate?
+
+```{r}
+survivalkm$surv[survivalkm$time==2183]
+```
+```{r }
+survivalkm$surv[survivalkm$time==2183]
+```
+
+
+11. Carry out a survival regression using `survreg()` with no independent variables and a Weibull survival-time distribution model.  Examine the output summary.  Is there evidence for a non-zero `Log(scale)` parameter?  What does this mean?  (Remember: this parameter actually describes the shape; the intercept describes the scale.  Yes, this is confusing.)
+
+```{r}
+sr = survreg(survival~1)
+summary(sr)
+```
+
+12. Confirm your conclusion about the `Log(scale)` parameter from #11 by fitting an exponential-distribution model and comparing via `anova()` or `AIC()`.
+
+```{r}
+srexp = survreg(survival~1,dist='exponential')
+anova(sr,srexp,test='Chi')
+```
+```{r }
+AIC(sr,srexp)
+```
+
+13. Calculate the actual shape (a) and scale (s) parameters for the Weibull model.  [Reminder: The shape a is equal to the exponential of what `survreg` calls `Log(scale)`, or the reciprocal of what `survreg` calls `Scale`.    The scale s is equal to the exponential of the intercept term.  You can also access the parameter variables directly within the model object via \$scale and \$coefficients.]
+
+```{r}
+a = 1/sr$scale # shape
+s = exp(sr$coeff[1]) # scale
+a
+s
+```
+
+14. Calculate the model survivorship curve using the formula from lecture (or using `pweibull()`), given the values of s and a.  Re-plot the K-M estimator (from #8), and then overplot this model survivorship curve on top of it.
+
+```{r}
+plot(survivalkm,xlab='Time',ylab='Survivorship')
+tplot = seq(0,2500,10)
+lines(tplot, 1-pweibull(tplot,shape=a,scale=s), lwd=3)
+```
+
+15. Plot the hazard function h(t) of the best-fit Weibull model using the formula from lecture (slide #28).
+
+```{r}
+plot(tplot, (a/s)*(tplot/s)^(a-1),typ='l', xlab='Time', ylab='Hazard function', lwd=3)
+```
+
+16. Calculate the expected survival time distribution using the formula from lecture (or using `dweibull()`).  Overplot this curve on the (censorship-uncorrected) histogram from #4 (but with `freq=FALSE`).  Why does the curve systematically exceed the histogram values at late times?
+
+```{r}
+hist(times, freq=FALSE, main='')
+lines(tplot, dweibull(tplot,shape=a,scale=s), lwd=3, col='brown')
+```
+
+
+17. Calculate and plot the Kaplan-Maier estimator of the survivorship curve for the male and female participants separately.  Colour-code the two curves and add a legend.
+
+```{r}
+kmsex = survfit(survival ~sex, data=df)
+plot(kmsex,col=c(2,4),lwd=2, xlab='Time', ylab='Survivorship')
+legend('topright',c('Female','Male'),col=c(2,4),lty=c(1,1),lwd=c(3,3))
+```
+
+
+18. Carry out a survival regression using `survreg()`.  Consider as independent variables all the other fields in the model (state, sex, T.categ, age).  You can ignore interactions.  Which of these appear to have a significant impact on survival time?
+
+```{r}
+sr = survreg(survival~state+sex+T.categ+age,data=df)
+summary(sr)
+```
+
+19. Retain only the terms you found to be significant in #18 and re-run the model.  Print out a summary.
+
+```{r}
+srfinal = survreg(survival~T.categ+age,data=df)
+summary(srfinal)
+```
+
+20. By what factor is the survivorship behaviour "accelerated" (or decelerated) for a patient with transmission mode "het" versus a patient with transmission mode "hs"?
+
+```{r}
+exp(srfinal$coeff['T.categhet'])/exp(srfinal$coeff['T.categhs'])
+```
+
+
+21 (optional). Use `coxph()` to fit a nonparametric proportional-hazard (Cox) model instead, using the same explanatory variables from your final parametric fit above.  Produce a summary table.
+
+```{r}
+cox = coxph(survival~T.categ+age,data=df)
+summary(cox)
+```
+
+22 (optional). By what factor is hazard increased/decreased for a patient with transmission mode "het" versus a patient with transmission mode "hs"?  (To calculate relative hazard, take the exponential of the appropriate model coefficient.)
+
+```{r}
+exp(cox$coefficients['T.categhet'])/exp(cox$coefficients['T.categhs'])
+```
+
+23 (optional). Plot the baseline cumulative hazard using `basehaz()`.
+
+```{r}
+```
+
+
+******
+
+## Bayesian Inference (1 parameter)
+
+Suppose that some process is known to produce data that is Weibull-distributed, and you know in advance that the scale parameter is s=1.0.  However, you do not know the shape parameter a.  You obtain four measurements: 0.3, 2.1, 0.8, and 1.2.
+
+24. Plot the likelihood function $L(a)$ for this situation given the first measurement only (x=0.3).  Make sure you set the upper limit for the shape parameter high enough to see the full distribution, and use a finely-spaced grid (0.01 or less).  Note that a=0 is not a mathematically valid value.
+
+```{r}
+x = 0.3
+shape = seq(0.001,10,0.001)
+plot(shape, dweibull(x, shape, 1), type='l', ylab='Likelihood for x=0.3')
+```
+
+25. Calculate the joint likelihood function given all four data points by taking the product of the individual likelihood functions for each individual data point.  Then make a plot of this function.  (You may want to adjust the x axis range.)
+
+```{r}
+x = c(0.3, 2.1, 0.8, 1.2)
+jointL = rep(1.0, length(shape))
+for (i in 1:length(x)) jointL = jointL * dweibull(x[i], shape, 1)
+plot(shape, jointL, type='l', xlim=c(0,10), ylab='Joint likelihood')
+```
+
+26. Calculate the posterior probability density given our data and assuming a flat prior.  To do this, calculate the the numerical integral of the joint likelihood ( = sum(L*stepsize) ) and divide the joint likelihood by this quantity.  Then, make a plot of the posterior probability density.
+
+```{r}
+posterior = jointL / sum(jointL*0.001)
+plot(shape, posterior, type='l', xlim=c(0,10))
+```
+
+27. Find the maximum likelihood value of the shape parameter a by finding the position (value of a) where the posterior density is maximized.
+
+```{r}
+shape[posterior==max(posterior)]
+```
+
+28. Calculate an approximate 95% credible interval on the shape a, by finding two values of a such that the integral of the posterior density between these points is 0.95.  (If possible, do this by finding a value of P such that the integral of the values of the posterior density >= P is 0.95.  Then report the maximum and minimum values of a for which P is above this value.)
+
+```{r}
+for (P in seq(0.0,max(posterior),0.001)) {
+probenclosed = sum(posterior[posterior > P]*0.001)
+if (probenclosed < 0.95) break
+}
+CI = range(shape[posterior > P])
+CI
+```
+```{r }
+plot(shape, posterior, type='l', xlim=c(0,10))
+abline(h=P, col='blue', lty=3)
+abline(v=CI[1], col='red')
+abline(v=CI[2], col='red')
+
+```
+
+
+

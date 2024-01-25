@@ -1,0 +1,388 @@
+---
+title: 'Lab 6: Regression'
+output:
+  pdf_document: default
+  word_document: default
+---
+
+Complete all of the following questions, adding your inputs as code chunks (enclose within triple accent marks) within Rmarkdown.
+
+The exercises are not marked and will not be factored into your course grade, but it is important to complete them to make sure you have the skills to answer assessment questions.  You may consult any resource, including other students and the instructor.  Please upload your work via Canvas at the end of the session.  Solutions will be posted for you to check your own answers.
+
+******
+
+## Correlation and Covariance
+
+Consider the following vectors (expressed as rows of a table):
+
+| name | values             |
+| ---- | ------------------ |
+| x    | 0, 1, 2, 3, 4      |
+| y1   | 20, 30, 40, 50, 60 |
+| y2   | 8, 7, 6, 5, 4      |
+| y3   | 0, 1, 0, 1, 0      |
+| y4   | 1, 1, 3, 3, 5      |
+
+1. Make a four-panel plot (use `par(mfrow=c(2,2))`) of x versus y1, x versus y2, x versus y3, and x versus y4.  Take a guess of what the correlation coefficient for each will be.  (Be sure to set the plot back to single-panel when you're done.)
+```{r }
+par(mfrow=c(2,2))
+par(mar=c(2,3,1,1))
+x=c(0, 1, 2, 3, 4)
+y1=c(20,30,40,50, 60)
+y2=c(8,7, 6,5,4)
+y3=c(0,1,0,1,0)
+y4=c(1,1,3,3,5)
+plot(x, y1)
+plot(x,y2)
+plot(x, y3)
+plot(x, y4)
+```
+```{r }
+par(mfrow=c(1,1))
+par(mar=c(5,4,4,2))
+```
+
+2.  Calculate the actual (Pearson) correlation coefficient for each of the four vector pairs above (use `cov(x,y)/(sd(x)*sd(y))` or just `cor(x,y)`), and compare it to your by-eye guess.
+
+```{r }
+cor(x,y1)
+cor(x,y2)
+cor(x,y3)
+cor(x, y4)
+```
+
+******
+
+## Writing a Regression Function
+
+3.  Write your own simple linear regression parameter solver by implementing the equations from lecture.  The solver should be implemented as a custom R function which accepts two vectors: x and y (which should be of equal length).  The function should calculate both means, then calculate SSX and SSXY, then calculate b, then calculate a.  Then, it should create a list containing a and b and return that list.
+
+	The equations are:
+
+  $$SSXY = \sum_i{x_i y_i} - n \bar{x} \bar{y} = \sum_i{(x_i - \bar{x})(y_i-\bar{y})}$$
+  $$SSX = \sum_i{x_i^2} - n \bar{x}^2 = \sum_i{(x_i - \bar{x})^2}$$
+  $$b = \frac{SSXY}{SSX}$$
+  $$a = \bar{y} - \frac{SSXY}{SSX}\bar{x} $$
+
+```{r}
+regression = function(x, y) {
+meanx = mean(x)
+meany = mean(y)
+ssx = sum( (x-meanx)^2 )
+ssxy = sum( (x-meanx)*(y-meany) )
+b = ssxy / ssx
+a = meany-b*meanx
+return(list(a=a,b=b))
+}
+```
+
+
+4. Test out your function by giving it the same four vector pairs from #1 and #2  (x as the independent variable and each y as the dependent variable) and confirming that the intercept and slope are sensible.
+
+```{r}
+regression(x, y1)
+```
+```{r}
+regression(x, y2)
+```
+```{r}
+regression(x, y3)
+```
+```{r}
+regression(x, y3)
+```
+```{r}
+regression(x, y4)
+```
+
+******
+
+## Simple Linear Regression
+
+The following data table compares the radon exposure levels (in WLM) and lung cancer mortality rates (relative to the general population) for several groups of underground miners at various sites.  (From Lubin et al., 1995)
+
+
+    Exposure  Mortality
+    --------  ---------
+    0         1
+    14        0.90
+    34        1.25
+    71        1.30
+    86        1.41
+    148       1.77
+    283       2.35
+
+5. Load these data into two vectors and make a scatter plot of exposure (x-axis) versus mortality (y-axis).  Do you think there is a trend?  Does it appear to be linear?
+
+```{r}
+exposure=c(0, 14, 34,71, 86, 148, 283)
+mortality=c(1, 0.90, 1.25, 1.30, 1.41, 1.77, 2.35)
+plot(exposure,mortality)
+```
+
+6. Calculate the Pearson correlation coefficient ($r$) between exposure and mortality using `cor()`, and determine the statistical significance (p-value) of the correlation using `cor.test()`.
+
+```{r}
+cor(exposure,mortality)
+
+```
+
+```{r}
+cor.test(exposure,mortality)
+
+```
+
+
+7. Also calculate the Spearman ($\rho$) and Kendall ($\tau$) correlation coefficients for these variables, and the statistical significance of the correlation using these two methods.  Compare these numbers to the Pearson equivalents.
+
+```{r}
+cor.test(exposure,mortality, method = 'spearman')
+```
+
+```{r}
+cor.test(exposure,mortality, method = 'kendall')
+```
+
+8. Use your regression function from #3 to measure the maximum-likelihood best-fit parameters for a and b.
+
+```{r}
+rmpar=regression(exposure, mortality)
+rmpar
+```
+
+9. Redraw your exposure vs. mortality scatter plot from #4 and add the best-fit line.  (Reminder: to add a line/curve to an existing plot, use `lines`.)  Does it look like a good fit?
+
+```{r}
+xplot=c(0, 400)
+plot(exposure,mortality)
+lines(xplot,rmpar$a+rmpar$b*xplot,col='orange')
+```
+
+10. Use R's `lm()` function to confirm your estimates of the best-fit parameters a and b.
+
+```{r}
+lm(exposure~mortality)
+```
+
+11. What are the standard errors on the parameters?  What is the significance of the conclusion that b is not zero?
+
+```{r}
+summary(lm(exposure~mortality))
+```
+
+12. For every 1 WLM increase in radon exposure, by what *percent* does the risk of fatal lung cancer increase over the general population, according to the model?  (Hint: this is related to the slope of the model line.)
+
+```{r}
+100*0.0049816
+```
+
+13. Based on the regression, how much radon exposure (in WLM) is necessary to double the risk of fatal lung cancer, compared to someone with zero exposure?  (That is, at what level of exposure does the model say that mortality will be 2)? 
+
+```{r}
+(2-rmpar$a)/rmpar$b
+```
+
+
+******
+
+## Linear Regression with Polynomials
+
+Consider the following data, which correspond to measurements of the amount a camera image becomes blurred (response variable "blur") as the focus position is adjusted (explanatory variable "focus").
+
+	focus:	-27,   -24,  -20,   -16,   -12,    -9,    -7,     0,     3,    9,    12,    15
+	blur:	11.52, 10.96, 10.2,  9.83,  9.82,  9.86, 10.13, 10.35, 10.92, 11.5, 11.97, 12.22
+
+14. Enter these data into R as vectors and plot as a scatter plot.  Do you think a simple linear model will be appropriate?
+
+```{r}
+focus=c(-27,-24,-20,-16, -12, -9, -7, 0, 3, 9, 12, 15)
+blur=c(11.52, 10.96, 10.2,  9.83,  9.82,  9.86, 10.13, 10.35, 10.92, 11.5, 11.97, 12.22)
+plot(focus, blur)
+```
+
+
+15. Try fitting a simple linear regression model to these data anyway.  Overplot the best-fit model line on the data scatter plot. 
+
+```{r}
+fit=lm(blur~focus)
+plot(focus, blur)
+lines(focus, predict(fit), col='orange')
+```
+
+16. Confirm that this is a poor fit by investigating the R diagnostic plots.  (Use `par(mfrow=c(2,2))` to see all the plots at once, setting `par(mfrow=c(1,1))` when you're done.)  Make sure you understand (in qualitative terms) what each panel means.
+
+```{r}
+par(mfrow=c(2,2))
+plot(fit)
+```
+```{r}
+par(mfrow=c(1,1))
+
+```
+17. Next, try fitting a quadratic model instead of a simple linear one.   What is the t-statistic on the quadratic parameter, and is it significantly different from zero?
+
+```{r}
+qua = lm(blur~focus+I(focus^2))
+summary(qua)
+```
+
+18. Overplot the curve for the new model against the data (try to make the curve smooth by using a well-sampled plotting variable for the x values!) and check the diagnostic plots.  Is there still evidence for a trend?
+
+```{r}
+plot(focus,blur)
+xplot = seq(-40,20,0.1)
+lines(xplot,predict(qua,list(focus=xplot)),col='orange')
+```
+```{r}
+par(mfrow=c(2,2))
+plot(qua)
+```
+```{r}
+par(mfrow=c(1,1))
+```
+
+19. Now try fitting a cubic model.  (Don't drop the linear and quadratic components: these are still part of a cubic model!)  Is the cubic term significantly different from zero?  Overplot this curve on the data and check the diagnostic plots.
+
+```{r}
+cubic = lm(blur~focus+I(focus^2)+I(focus^3))
+summary(cubic)
+
+```
+```{r}
+plot(focus,blur)
+dg = predict(cubic,list(focus=xplot))
+lines(xplot,dg,col='orange',lwd=2)
+```
+
+
+20. Using the cubic model curve, estimate the value of "focus" at which "blur" is minimized and thus the best focus is obtained (numerically is fine, but you can solve the equation if you prefer.)  Allow for the possibility that the best focus value is in between the actual measurements.
+
+```{r}
+xplot[dg==min(dg)]
+```
+```{r}
+xplot[which.min(dg)]
+
+```
+
+******
+
+## Transforms
+
+A recent paper submitted by a group of prominent theoretical astrophysicists (Zou et al., arXiv:/1710.07436) examines the relationship between two parameters observed for gamma-ray bursts, the peak photon energy ("Epeak") and the isotropic-equivalent energy release ("Eiso").  A data table from their paper is given in grbenergy.txt.
+
+
+21. Load this data table into R (use `read.table` with `header=TRUE` for space-delimited files), and make a simple scatterplot of Eiso (x-axis) versus Epeak (y-axis).
+
+```{r}
+grb=read.csv('grbenergy.txt', header = TRUE, sep= '')
+head(grb)
+
+
+
+```
+```{r}
+plot(grb$Eiso,grb$Epeak)
+```
+The "Amati relation" purports an empirical relationship between these two quantities described by the following equation: 
+
+$$E_{\rm peak} =  A \times E_{\rm iso}^P$$
+
+This is a nonlinear function, since one parameter (P) is in an exponent and therefore not linear with respect to the dependent variable Epeak.
+
+22. Transform the relation by taking the logarithm of both sides of this equation to produce a linear equation (do this by hand, not in R!).  Then, transform your data variables (Epeak and/or Eiso) to match this new equation.
+
+```{r}
+x = log(grb$Eiso)
+y = log(grb$Epeak)
+```
+
+23. Perform a linear regression with `lm() `in R on the transformed variables and examine the output (use `summary`).
+
+```{r}
+linearReg = lm(y~x)
+summary(linearReg)
+```
+
+24. In the original version of their paper, these authors declared the correlation between the transformed variables to be significant (p-value of p=0.03) and reported coefficients of log(A)=6.95 and P=0.18.  Do you agree with their conclusions?
+
+**No, linear regression gives different values for log(A) and for P and state that the correlation is not  significant** . 
+25. Plot the transformed variables (as points) and your fitted relation (as a line) on a scatter plot.  (Optional:  also add the authors' relation.)
+
+```{r}
+plot(x,y, xlab='log(Eiso)', ylab='log(Epeak)')
+px = sort(x)
+lines(px, 6.95+0.18*px, col='blue', lty=3)
+
+```
+
+******
+
+## Nonlinear Regression
+
+The data file in specline.csv contains simulated observations of an emission spectrum of an object.  The columns are the wavelength in nanometers and the spectral energy flux at that wavelength (in arbitrary units).
+
+26. Plot the data as a scatter plot (flux is the response variable).  Would a linear model (or polynomial model) be appropriate here?
+
+```{r}
+spec=read.csv('specline.csv')
+plot(spec)
+```
+
+27. Fit a non-linear model to the data using `nls()`.  Specifically, fit a normal function (of unknown centre C, width W, and height H), plus a constant component A: 
+		$$y = A + H \times {\rm exp}(\frac{-(x-C)^2}{2W^2})$$
+You'll have to specify an initial guess for the model, and it's essential that you guess this reasonably accurately: narrowly peaked functions such as this one can easily get "lost" in parameter space!
+
+```{r}
+linear_model = nls(flux~A+H*exp(-(wav-C)^2/(2*W^2)),start=list(A=0.7,H=1,C=656.3,W=0.2), data=spec)
+linear_model
+```
+
+28. What is the significance of the detection of this spectral line?  (A "detection" in this context means that the height of the line H is significantly greater than zero.)
+
+```{r}
+summary(linear_model)
+```
+
+29. Plot the model curve on top of the data.
+
+```{r}
+plot(spec)
+lines(spec$wav,predict(linear_model),col='orange',lwd=3)
+```
+
+******
+
+## Nonparametric Regression and Smoothing
+
+30. Load in the data in bumpy.csv.  Make a scatter plot of x versus y from this data.  Is there an obvious functional model that fits this curve?
+
+```{r}
+bumpy = read.csv('bumpy.csv')
+plot(bumpy)
+```
+
+31. Fit a local regression (loess) model, then replot the data and add the loess prediction curve.  If the fit is not good, try reducing `span`.
+
+```{r}
+lbump = loess(y~x,span=0.2, data=bumpy)
+plot(bumpy)
+lines(bumpy$x,predict(lbump),col='orange', lwd=4)
+```
+
+32. Fit a smoothed spline model, then replot the data and add the new prediction curve.
+
+```{r}
+sbump = smooth.spline(bumpy$y~bumpy$x) 
+plot(bumpy)
+lines(bumpy$x,predict(sbump)$y,col='orange',lwd=4)
+```
+
+33. Fit a generalized additive model using `gam()`, then replot the data and add the new prediction curve.
+
+```{r}
+library(mgcv)
+gbump = gam(bumpy$y~s(bumpy$x))
+plot(bumpy)
+lines(bumpy$x,predict(gbump),col='orange',lwd=4)
+```

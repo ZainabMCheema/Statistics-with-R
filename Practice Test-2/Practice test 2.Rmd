@@ -1,0 +1,133 @@
+---
+title: "Untitled"
+output: html_document
+date: "2023-12-24"
+---
+Problem 1: Probability, Distributed
+1. Plot this function over the range −10 < x < +10, using an appropriate plot type.
+```{r }
+x=seq(-10, 10, 0.01)
+
+pdf=rep(0, length(x))
+pdf[x>-10 & x<10]=0.5 *exp(-abs(x)[x>-10 & x<10])  
+plot(x, pdf, type='l')
+```
+```{r cars}
+x= seq(-10, 10, 0.01)
+cdf1= rep(0, length(x))
+cdf1[x>0]= 1-0.5*exp(-x[x>0])       
+cdf1[x <=0]=0.5*exp(x[x <=0])
+plot(x, cdf1, type='l')
+```
+Problem 2: Pollution and Health
+Q1.
+
+```{r }
+poll_df=read.csv('pollution.csv')
+head(poll_df)
+
+#unique(poll_df$area)
+```
+```{r }
+df_control= poll_df[poll_df$area == 'C',]
+df_indu= poll_df[poll_df$area== 'I', ]
+par(mfrow=c(1,2))
+hist(df_control$concentration, xlim=c(0, 15), ylim = c(0, 15), breaks=seq(0, 16, 1) , main= 'Area Control')
+hist(df_indu$concentration, xlim=c(0, 15), ylim = c(0, 15), breaks=seq(0, 16, 1) , main= 'Area Industry')
+
+```
+Q-2
+
+```{r }
+pseudo.C.avg = unname(tapply(df_control$concentration, df_control$id, mean))
+t.test(pseudo.C.avg)
+
+pseudo.I.avg = unname(tapply(df_indu$concentratio, df_indu$id, mean))
+t.test(pseudo.I.avg)
+```
+
+```{r }
+mean_function = function(data, indices) {
+  d = data[indices]
+  return(mean(d))
+}
+library(boot)
+boot_control = boot(df_control$concentration, mean_function, R = 1000)
+boot_ci = boot.ci(boot_control, type = "basic") 
+boot_ci
+```
+```{r }
+boot_indu = boot(df_indu$concentration, mean_function, R = 1000)
+boot_ci = boot.ci(boot_indu, type = "basic") 
+boot_ci
+```
+Q-3
+```{r }
+var_test= var.test(df_indu$concentration, df_control$concentration)
+var_test$p.value
+var_test
+```
+Q-4
+
+```{r }
+#pairwise_test <- pairwise.t.test(poll_df$concentration, poll_df$area, p.adj = "bonferroni")
+pairwise_test
+```
+```{r }
+#t_test = t.test(df_control$concentration, df_indu$concentration)
+t_test
+```
+```{r }
+t.test(pseudo.I.avg ,pseudo.C.avg )
+
+```
+Q-5
+```{r }
+num_above_15 = sum(df_indu$concentration >= 15)
+total_num = length(df_indu$concentration)
+prop = num_above_15/total_num
+prop
+```
+Q-6
+
+```{r }
+#calculate variance for group
+var_cont = (sd(df_control$concentration)/0.3)^2
+var_indu = (sd(df_indu$concentration)/0.3)^2
+var_cont
+var_indu
+```
+
+```{r }
+df_os=read.csv('oscillate.csv')
+head(df_os)
+```
+```{r}
+lm_model_0 = lm(D ~ 1, data = df_os)  
+lm_model_1 = lm(D ~ sin(w) + cos(w), data = df_os)
+lm_model_2 = lm(D ~ sin(w) + cos(w) + sin(2*w) + cos(2*w), data = df_os)
+lm_model_3 = lm(D ~ sin(w) + cos(w) + sin(2*w) + cos(2*w) + sin(3*w) + cos(3*w), data = df_os)
+r1 = anova(lm_model_0, lm_model_1)
+#summary (r1)
+```
+```{r }
+r2= anova(lm_model_1, lm_model_2)
+summary(r2)
+
+```       
+```{r }
+r3= anova(lm_model_2, lm_model_3)
+summary(r3)
+
+
+```
+```{r }
+```
+
+```{r }
+library(ggplot2)
+ggplot(poll_df, aes(x = concentration, fill = area)) +
+  geom_histogram(position = "identity", alpha = 0.5, bins = 20) +
+  labs(x = "Concentration", y = "Frequency", title = "Histogram of Concentrations by Area")
+
+```

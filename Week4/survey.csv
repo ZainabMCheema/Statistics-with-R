@@ -1,0 +1,33 @@
+age,height,gender,football_club,beverage,siblings,av_height_est,dogs,hometown_pop,berlin_dist_est,berlin_dist_unc,distance,fave_nums,wake_time_wkday,wake_time_wkend,colour1,colour2
+35,70,male,Chelsea,NA,4,60,No,200000,10000,5000,5,"7,14",06:00,07:00,Blue,White
+26,75,male,Chelsea,coffee,3,66,Yes,2000000,100,80,4,"8,14",06:00,07:00,Blue,Black
+25,73,male,Liverpool,coffee,1,60,Yes,14000000,200,50,0,"7,12",09:00,11:30,Blue,Black
+23,69,male,Arsenal,coffee,1,70,Yes,20000,3000,500,0.7,"7,5",07:00,08:00,Red,White
+23,69,male,Barcelona,coffee,1,NA,Yes,1000,1000,500,2,"8,420",07:00,08:30,Red,Black
+21,72,male,Liverpool,coffee,2,66,Yes,60000,1500,250,10,"17,257",08:00,12:00,Green,Black
+NA,67,female,none,none,0,68,Yes,38000,800,100,3,"2,4,6,8",07:00,07:00,Blue,Black
+22,69,male,Liverpool,coffee,2,68,Yes,500000,800,200,4,"7,22",08:00,08:00,Red,Black
+NA,64,female,none,tea,5,64,No,504000,NA,NA,0.8,"9,7",09:00,10:00,Red,White
+35,71,male,Manchester City,coffee,0,70,Yes,4000000,3000,500,0.7,"3,33",07:00,08:00,Blue,Black
+24,65,female,Real Madrid,coffee,2,66,Yes,3000000,600,200,1,"4,6,8",09:00,11:00,Red,White
+22,68,female,NA,coffee,3,67,Yes,500000000,NA,NA,0.4,"3,2",07:30,08:30,Blue,Black
+22,66,male,Real Madrid,coffee,1,70,Yes,NA,1000,NA,1,"7,4",07:00,06:00,Red,Black
+24,67,male,NA,coffee,4,59,Yes,25000,1500,500,1.5,"21,64",08:00,11:00,Blue,Black
+NA,NA,male,NA,energy drink,0,68,Yes,60000,1000,NA,1.5,"10,46",05:30,05:30,Red,Black
+24,67,male,Wisla Krakow,cola,1,67,Yes,1337,495,40,0,"13,21",07:30,09:00,Green,White
+25,61,female,Liverpool,coffee,1,70,Yes,3000000,4000,NA,1,"5,2",08:00,10:00,Red,Black
+24,71,male,Chelsea,coffee,2,65,Yes,10000,600,200,0.5,"6,8",07:30,08:30,Green,Black
+22,64,female,Liverpool,coffee,1,68,Yes,44000,NA,NA,8,"6,21",07:30,12:00,Red,Black
+21,69,female,PSG,tea,2,65,Yes,300,300,100,4,"2,19",10:00,13:00,Blue,White
+23,66,male,NA,tea,2,70,Yes,1408,1000,50,5,"3,5",07:00,07:00,Blue,White
+25,59,female,Liverpool,tea,1,70,Yes,3300000,500,100,0.6,"7,20",07:00,09:00,Blue,Black
+24,NA,female,NA,coffee,NA,NA,Yes,400000,2000,102,2,"6,8",06:30,09:00,Blue,Black
+28,72,male,Chelsea,cola,2,68,No,1000000,3222,1000,15,"2,22",05:00,05:00,Blue,Black
+29,65,female,NA,coffee,1,65,Yes,1080100,700,600,2.5,"9,11",07:30,08:30,Green,Black
+21,69,male,Liverpool,cola,1,65,Yes,6000,750,40,1.5,"28,196",08:00,06:45,Red,Black
+25,65,female,NA,coffee,1,70,No,3000000,600,100,1,"26,8",08:00,10:00,Red,Black
+22,70,male,Leeds,coffee,1,69,Yes,21000,900,300,1,"27,e",08:00,08:00,Green,White
+33,60,female,none,tea,1,71,No,95000,1000,70,8,"3,7",06:30,07:30,NA,Black
+30,66,female,none,coffee,3,60,No,500,2000,500,2,"92,6",05:30,07:00,Blue,Black
+33,68,male,Liverpool,energy drink,3,67,No,165000,910,NA,3,"3,8",06:30,05:00,Green,White
+25,74,male,NA,NA,3,60,Yes,69000,3400,200,3,"3,7",06:00,05:00,Blue,Black
