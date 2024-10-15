@@ -1,0 +1,278 @@
+---
+title: 'Lab 2: Data Structures'
+output:
+  pdf_document: default
+  word_document: default
+---
+
+Complete all of the following questions, adding your inputs as code chunks (enclose within triple accent marks) within Rmarkdown.
+
+The exercises are not marked and will not be factored into your course grade, but it is important to complete them to make sure you have the skills to answer assessment questions.  You may consult any resource, including other students and the instructor.  Please Knit this document to a PDF and upload your work via Canvas at the end of the session.  Solutions will be posted for you to check your own answers.
+
+******
+
+## String manipulation
+
+1. Write your own sentence (at least 5 words) and store it in a string (character) variable.
+
+```{r}
+```
+
+2. Print out the first 10 characters of the string to the screen (use `substr`).
+
+```{r}
+```
+
+3. Print out the second character of the string.
+
+```{r}
+```
+
+4. Print the sentence in ALL UPPERCASE (use `toupper`).
+
+```{r}
+```
+
+5. Print out a string containing the sentence but with all spaces converted to underscores (use `gsub`).
+
+```{r}
+```
+
+6. Create a vector where each element of the vector contains a word from the string (use `strsplit`) and print it out.
+
+```{r}
+```
+
+7. Print the words in your string in alphabetical order by storing the vector above in a variable, and then sorting it with `sort`.
+
+```{r}
+```
+
+8. Create a variable containing the string "34 miles".   (This is the approximate distance to Manchester.)
+
+```{r}
+```
+
+9. Use `strsplit` and `as.numeric` to extract the numerical portion of the string, convert it to a number, and then divide it by two in order to calculate half the distance to Manchester in miles without any new data input.  Save it as a variable and print it to the screen.
+
+```{r}
+```
+
+10. Use the variable above to print out a single string that states:  "Half the distance to Manchester is XX miles", except with the true value in place of XX.  (Use `paste` to attach the strings.)
+
+```{r}
+```
+
+******
+
+## Matrices
+
+11. Create a matrix (stored in variable m) of 3 rows and 5 columns, with every value equal to zero.  Print out the matrix to confirm its shape.
+
+```{r}
+```
+
+12.  Set the value in the 2nd row, 3rd column to 1, then print out the matrix again.
+
+```{r}
+```
+
+13.  Set all the values in the 4th column to 2.  Set all values in the 3rd row to 3.  Print out the matrix again.
+
+```{r}
+```
+
+14.  Tack on a new row to the bottom of the matrix.  The new row's elements should be all equal to 4.  Then, tack on a new column to the right of the matrix.  The new column's elements should be all equal to 5.  (Use `rbind` and `cbind`.)  Print out the matrix again and confirm that it now has 6 columns and 4 rows.
+
+```{r}
+```
+
+15. Print the sum of all the elements in the matrix.  (The result should be 60: if not, return to question 10).
+
+```{r}
+```
+
+16. Print a vector containing the sums of all the elements in each individual row (use `apply`)
+
+```{r}
+```
+
+17. Print a vector containing the sums of all the elements in each individual column.
+	
+```{r}
+```
+
+18. Print a vector containing the means of all the elements in each individual column.
+
+```{r}
+```
+
+19. Print a vector containing the medians of all the elements in each individual column.
+
+```{r}
+```
+
+20. Print the transpose of the matrix (rows and columns swapped.)
+
+```{r}
+```
+
+******
+
+## Named vectors
+
+21. Suppose you collected the following data on your friends' birthdays:
+
+	  Alice:    31/8  
+	  Bob:	 	  5/5	  
+	  Carol:    11/12  
+	  David:  	17/10  
+
+	Create a string vector containing *just* the birthdays.
+
+```{r}
+```
+
+22. Add names to all four elements in your vector using your friends' names above.
+
+```{r}
+```
+
+23. Print out Carol's birthday using her name as a subscript.
+
+```{r}
+```
+
+
+******
+
+## Lists
+
+Suppose you have some miscellaneous data about a car:
+    It has 4 seats.
+    Its top speed is 100 miles per hour.
+    The make is Hyundai.
+    The model is Elantra.
+    The transmission is standard.
+    The tyre pressure readings in PSI are 30, 31, 29, 33.
+
+24.  Create a list containing all this data in a single variable.  Print out information about its structure.
+
+```{r}
+```
+
+25. Print out the mean tyre pressure (using an operation on your list variable).
+
+```{r}
+```
+
+******
+
+## Data Frames
+
+26.  Reload the student summary table from the in-class exercise.  How many students are represented in the survey, and how many variables are present?
+
+```{r}
+```
+
+27.  Generate a summary of the dataframe using the `summary` command.  Then, answer the following questions:
+  a. What is the mean and median height of the students?
+  b. What is the most popular football club?
+  c. What is the most popular type of caffeinated beverage?
+
+> You can simply read them off the summary table and enter them down below the code chunk by hand.  (In principle you can also calculate them using various R functions, but this is less straightforward.)
+
+```{r}
+```
+
+28.  Using a logical subscript, print out the distance from Liverpool city centre of everyone who listed Liverpool as their top football club.
+
+```{r}
+```
+
+29. Print out the distances of everyone who listed a football club other than Liverpool as their top football club.  (This should *not* include those with no preference / no answer!)
+  
+```{r}
+```
+
+30. Calculate the average height of women in the survey, and the average height of men in the survey.
+
+```{r}
+```
+
+31. Calculate the mean heights of everyone in the survey broken down by their preferred beverage (i.e.: the mean heights of coffee-drinkers, tea-drinkers, etc.)   Note: You can do this with a single command in R.
+
+```{r}
+```
+
+32. Produce a histogram of (all) student heights.  Note: be careful about the default break points!
+
+```{r}
+```
+
+33. Overplot (plot on top of the previous plot) two vertical lines of different colours: one at the MEAN value, and one at the MEDIAN value.  *(Note: in Rmarkdown you'll need to repeat the plotting command from #31 in your code chunk for #32.)*
+
+```{r}
+```
+
+34. Suppose that one of the students who did not specify a football club preference decides to support a team.  Choose a student that did not specify a football club (or specified 'none') and update the dataframe by assigning a football team of your choice to that student.  Then print out an updated frequency table containing the number of students supporting each football club.
+
+```{r}
+```
+
+
+
+******
+
+## Larger Data Frames and Normality
+
+The file abalone.csv (available on Canvas) contains data from a sample of blacklip abalones (*Haliotis rubra*) gathered from the Bass Straits of Tasmania in the early 1990s.  The measurements include various dimensions of the shell (length, diameter, height) and weight after various levels of treatment.  "Rings" gives the number of ring layers inside the shell and is a proxy for age since about one ring layer is added per year.  Dimensions are in metres and weights are in kilograms.
+
+35. Download the file abalone.csv to your local computer.  Load it into R as a data frame, and print out the first few lines using `head`.
+
+```{r}
+```
+
+36. How many different variables (columns) are in the table, what are their names, and what sort of data do they contain?  (Continuous, categorical, others)?   How many measurements are there in the sample?  (Use the `str` command.)
+
+```{r}
+```
+
+37.  Produce a summary table of the abalone dataset using `summary`.  Make sure you understand what all the numbers mean.
+
+```{r}
+```
+
+38.  Produce a four-panel set of plots (use `par(mfrow)` to set this up) containing histograms of the following four quantities: height, length, diameter, weight.  Make the axis labels and titles reader-friendly and use colours to fill the histogram bars.
+
+```{r}
+```
+
+39. Do any of these quantities appear to be normally distributed?
+
+*Write your response here.*
+
+40. Produce a (one-panel) box-and-whisker plot summarising the distribution of abalone diameter for the three sex categories (F, I, or M).  Be sure to label the axes.   Do the distributions of females and males seem obviously different?  What about for "I", meaning indeterminate/unknown sex?
+
+```{r}
+```
+
+41. Produce a box-and-whisker plot showing the distribution of abalone diameter as a function of number of rings (a measurement proxy for age in years.)
+
+```{r}
+```
+
+42.  Create a new dataframe that contains a subset of the original data frame: specifically, it includes only those rows for which nrings is greater than or equal to 13.  Then, produce a histogram of the diameters of this subset. (Set `freq=FALSE` to plot probability density instead of frequency, and you may want to specify the breaks to get better resolution.)  Do these look normally distributed?
+
+```{r}
+```
+
+43.  Check your assessment of normality by over-plotting a normal distribution on top of the histogram above, using the appropriate $\mu$ and $\sigma$ parameters to describe the population.  (Start by defining a plotting variable along the x-axis using `seq`, and then calculate the normal PDF as a function of this variable using the function `dnorm`.)
+
+```{r}
+```
+
+44. Explain why the central limit theorem did not seem to hold for the entire data set, even though it did for a subset.
+
+*Write your response here.*
+

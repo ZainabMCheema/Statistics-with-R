@@ -1,0 +1,201 @@
+---
+title: "Formatting, Tables, Plots and Equations in Rmarkdown"
+output:
+  pdf_document: default
+  html_document: default
+  word_document: default
+---
+
+# Formatting
+
+You can signify different formatting options easily in Rmarkdown:  *italics*, **bold**, and `fixed-width type` - as you will have already seen in the tutorials.  This can be helpful for calling attention to your answers or other important results.
+
+
+# Headings and Separators
+
+You can add headings to a Rmarkdown document by prepending the heading phrase with one or more hash characters (#), as above (and throughout this document).  More hashes means a smaller heading.
+
+You can also add a horizontal rule using a series of three (or more) dashes, as below.  This can be helpful for separating different questions within a problem.
+
+---  
+
+
+# Line-by-line execution
+
+We can step through lines one at a time with ctrl+enter (cmd+enter on Macs)
+
+```{r}
+v = c(5,6,7,8,8,9,11)
+n = length(v)
+vmean = mean(v)
+vmean.hyp = 0
+t = (vmean-vmean.hyp)/sd(v)/sqrt(n)   # something missing here...
+p = 2*(1-pt(abs(t),df=n-1))
+p
+```
+
+This can be useful for debugging.  A missing pair of brackets above made the program output a p-value of p=0.19 instead of the correct value of p=4.815e-5.
+
+
+# In-line results
+
+The results of commands issued in code chunks will appear below the code chunk, but you can also include results and variable values in-line with written text outside code chunks.  
+
+For example, we can say that the square root of 2 is `r sqrt(2)`.  
+
+Or, using the variable p from earlier, the p-value we calculated was `r p`.
+
+By default this provides more significant figures than we really need, but we can always round things off, e.g. to p = `r signif(p,2)`.
+
+
+# Code chunk options
+
+When you output values from a code chunk, you may want them to all appear at once at the end of the chunk, rather than interspersed between lines of the code chunk.  You can control this (and many other things) by specifying some options at the top of the chunk.  Compare the following:
+
+Default code chunk with no options:
+```{r}
+x = c(1,2,3,4,5)
+y = x^2
+x
+y
+```
+
+Code chunk with `results='hold'`:
+```{r results="hold"}
+x = c(1,2,3,4,5)
+y = x^2
+x
+y
+```
+
+Another useful feature is the ability to hide code inputs and outputs: this can be useful if you made some exploratory calculations/plots that you would like to keep for your own reference, but prefer to omit from your report in order to save space.  
+
+To hide inputs, specify `echo=FALSE`:
+
+```{r echo=FALSE}
+x = c(1,2,3,4,5)
+y = x^2
+x
+y
+```
+
+To hide outputs, specify `results='hide'`:
+
+```{r results="hide"}
+x = c(1,2,3,4,5)
+y = x^2
+x
+y
+```
+
+To hide figures, specify `fig.show='hide'`:
+
+```{r fig.show="hide"}
+x = c(1,2,3,4,5)
+y = x^2
+plot(x,y)
+```
+
+
+This can help you avoid exceeding the page limit, but should be used sparingly - you should never hide a calculation which is vital to your reasoning or any code which is used to generate outputs that provide the answer to a question.
+
+See https://yihui.org/knitr/options/ for many more chunk options.
+
+
+# Equations (HTML/PDF only)
+
+Equations and other mathematical expressions in Rmarkdown can be implemented using LaTeX syntax.  In-line mathematical symbols can be enclosed in single dollar signs (for example, $x=3$).  More complex equations can be encloses within double dollar signs.  LaTeX has expressions for superscript/subscript, fractions, sums, integrals, and almost every other mathematical operation.  Here are some examples:
+
+$$f(x) = x^2 + \frac{1}{x} + {\rm sin}(x)$$
+$$ \sum_{n=1}^{\infty} 2^{-n} = 1 $$
+
+$$\int_{1}^{\infty} x^{-3} dx = \left[-\frac{1}{2} x^{-2}\right]_{1}^{\infty} \\
+= -\frac{1}{2} \left[x^{-2}\right]_{1}^{\infty} \\
+= -\frac{1}{2} \left(0 - 1\right) = \frac{1}{2}$$
+
+$$PDF2(x) = \left\{
+\begin{array}{ll}
+e^{-x} & \mbox{if $x>1$},\\
+0 & \mbox{otherwise}
+\end{array}
+\right.$$
+
+There are many resources online with more information about implementing mathematical symbols and equations in LaTeX. See https://bookdown.org/yihui/rmarkdown/markdown-syntax.html#math-expressions for more information and examples within RMarkdown.
+
+A limitation of this method is that it may not render properly when exporting to Microsoft Word.
+
+
+# Tables
+
+You can render tables in Rmarkdown using a simple syntax.  Here is an example:
+
+|      | col1   | col2    | col3       | col4        |
+|------|--------|---------|------------|-------------|
+| row1 | 1      |  2      | 3          | 4           |
+| row2 | 22.2   |  99     | $x$        | $y^2$       |
+| row3 | N/A    | -5      | $\sqrt{2}$ |             |
+| row4 | value  |  33.333 |            | $n=$ `r n`  |
+
+Note that we can include mathematical expressions and even output variable values inside a table!
+
+If you already have a table in the form of a data frame or matrix, you can render it the same way using the knitr library's kable function:
+
+```{r}
+df = data.frame(x,y)
+library(knitr)
+kable(df)
+```
+
+
+# Plotting options
+
+## Basic plotting
+
+Most of the time it's easiest just to produce a plot in a code chunk, which will generally appear immediately below the chunk in the report.
+
+```{r}
+plot(x, y)
+lines(x, y, col='red')
+```
+
+## Plot with some extra options
+
+We can control the appearance in R in the usual way, but we also can control some additional things in Rmarkdown, such as the resolution, size, and positioning of the plot:
+
+```{r, fig.width=5, fig.height=3.5, fig.align='center'}
+plot(x, y)
+lines(x, y, col='red')
+```
+
+## Exporting to a file
+
+We can also save plots to disk rather than having them appear on the screen at all, in order to use them later.
+
+```{r, results='hide'}
+png("xyplot.png", width = 800, height = 600)
+plot(x,y)
+lines(x,y, col='red')
+dev.off()
+```
+
+## Including a figure from a file
+
+A saved plot, or any other image, can be included as follows:
+
+![Caption text goes here.](xyplot.png){#id .class width=70% height=70%}
+
+Change the options within the curly brackets to control the figure size.
+
+There are also ways to include images from within a code chunk using `knitr::includegraphics()`, providing some additional options: you can look these up if you are interested.
+
+
+# More information
+
+Much more information about Rmarkdown is available at:
+
+https://bookdown.org/yihui/rmarkdown/
+
+http://rstudio.com/wp-content/uploads/2015/02/rmarkdown-cheatsheet.pdf
+
+https://rstudio.com/wp-content/uploads/2015/03/rmarkdown-reference.pdf
+

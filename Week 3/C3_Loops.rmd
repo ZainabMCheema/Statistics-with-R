@@ -1,0 +1,204 @@
+---
+title: 'Lab 3: Randomisation, Loops, Normal Inference'
+output:
+  pdf_document: default
+  word_document: default
+---
+
+Complete all of the following questions, adding your inputs as code chunks (enclose within triple accent marks) within Rmarkdown.
+
+The exercises are not marked and will not be factored into your course grade, but it is important to complete them to make sure you have the skills to answer assessment questions.  You may consult any resource, including other students and the instructor.  Please Knit this document to a PDF and upload your work via Canvas at the end of the session.  Solutions will be posted for you to check your own answers.
+
+
+******
+
+## Random variates
+
+1. Create a vector containing a large number of values (at least $10^5$) drawn from the standard normal distribution.  Verify that the standard deviation is close to the theoretical value.
+
+```{r}
+```
+
+2. Numerically estimate the mean and standard deviation of a uniform distribution, where the PDF is equal to 1 between $0 < x < 1$ and equal to 0 everywhere else.
+
+```{r}
+```
+
+3. Numerically estimate the mean and standard deviation for the distribution formed by rolling a single six-sided (fair) die.
+
+```{r}
+```
+
+4. Numerically demonstrate (with a few examples) that the variance of the distribution formed by summing data sampled from two separate, independent normal distributions is equal to the sum of the component variances (for large $N$).
+
+```{r}
+```
+
+
+******
+
+## Loops
+
+5. Store your name in a character (string) variable.  Then, write a loop that prints out all the letters one by one, using `substr`.
+
+```{r}
+```
+
+6. Write a loop that prints out every other letter in your name, backwards, starting with the final letter.
+
+```{r}
+```
+
+7. Write a loop that does the following: starting with the variable n = 1, each the time the loop runs, the value n is doubled.  Keep looping as long as n remains less than 1 trillion (10^12^).  Once n exceeds a trillion, stop and print out n.  (Use a while loop.)
+
+```{r}
+```
+
+8. Create a 4x6 matrix m, initially containing all zeroes.  Then, use a nested loop (a loop inside a loop) to populate each element (x, y) of the matrix with a value equal to x*y.  Then, print out the matrix.
+
+```{r}
+```
+
+
+******
+
+## Simulations
+
+9. Write a loop that runs 10 times.  Each time the loop iterates, it should simulate rolling three six-sided die and print out their sum.  Run the loop and look at the output.
+
+```{r}
+```
+
+
+10. Write a loop similar to the one above, but instead of printing out the sum, store each result in an element of a vector.  To do this:
+    a. Create a vector "diesum" that is 10 elements long, initially all zeroes.
+    b. Use the loop you wrote from #9 above, but store the summed result in the i^th^ element of diesum instead of printing it out.
+    c. After the result finishes, print out the vector.
+    
+```{r}
+```
+
+11. Modify your loop from #10 (copy and paste below) to run 100000 times (on a 100000-element vector) instead of 10 times.  Plot a density histogram of the result (use `freq=FALSE` in `hist`).
+
+```{r}
+```
+
+
+12. Overplot a normal distribution PDF (with a mean equal to 3.5*3 and a standard deviation equal to your answer from #3 times the square root of three) on top of this histogram.
+
+```{r}
+```
+
+
+******
+
+## Simulating the t-distribution
+
+13. Conduct a simulation as follows.
+    a. Create a vector with 10000 elements (all zeroes).  Call it 'ts'.
+    b. Loop over the vector 10000 times.  During each iteration:
+        i. Randomly draw three numbers from a standard normal distribution.
+        ii. Calculate their mean $m$, standard deviation $s$, and standard error SE.
+        iii. Calculate Student's $t$ (= m/SE), and store this in the i^th^ element of ts.
+        
+  (Note: You can also conduct this simulation with vector operations.)
+
+```{r}
+```
+
+14. Print out the first 50 elements of ts. 
+
+```{r}
+```
+
+
+15. Plot a density histogram of ts.  (You'll probably find it's not particularly informative since most values are clustered close to zero.)
+
+```{r}
+```
+
+
+16. Plot a more informative density histogram that spans from -15 to +15 on the x-axis, with a bin spacing of 0.5.  (Note: you may have to set the limits of the histogram bins to a value much wider than -15 to +15.)
+
+```{r}
+```
+
+
+17. Overplot a $t$ distribution with 2 degrees of freedom on the histogram above. (Remember that you'll need to set up an $x$-axis plotting variable using seq first.  If running from the Rmakdown window you'll need to repeat the histogram plotting command from your previous answer.)
+
+```{r}
+```
+
+18. How many out of your 10000 simulation trial values of ts have an absolute value |t| > 3?   Compare this to the predicted value based on the CDF of the $t$-distribution above, which is given in R by `2*(1-pt(3,2))*10000`.
+
+```{r}
+```
+
+******
+
+## More on the t-distribution
+
+19. Produce a new plot.  Plot the standard normal distribution PDF.  Then overplot the t-distribution density function for 1 degree of freedom, 3 degrees of freedom, 10 degrees of freedom, and 30 degrees of freedom, each with a different colour.  How do they differ?  (Make sure to use an appropriate $x$-axis range.)
+
+```{r}
+```
+
+
+20.  Plot the *cumulative* distribution function for the normal distribution and for the t-distribution with the same four degree-of-freedom parameters ($\nu$ = 1, 3, 10, 30) above, using the same colours.
+
+```{r}
+```
+
+
+******
+
+## Normal inference and confidence intervals
+
+21. Find the file with the results from the student survey used in last week's lab session (or download it again from Canvas).   Read it in from disk as a dataframe (use `read.csv`) and make sure there are no NA values in the height column (use `is.na` and a logical subscript to remove any, if present).   Finally, sort the (entire) dataframe according to each student's estimate of the average height of the class (use `order`).
+
+```{r}
+```
+
+22. How many students provided a value for their height?
+
+```{r}
+```
+
+23. Calculate the mean height of students who took the survey and provided this value.  Do you think this is precisely the same as the mean height of *all* LJMU students?
+
+```{r}
+```
+
+
+24. Suppose we hypothesize that the mean height of all LJMU students is 5'11" (= 71 inches), and we assume that the survey students can be treated as a random sampling of the broader population of all LJMU students.   Can you rule out our hypothesis based on the survey data?  To do this, try the following:
+    a. Calculate (and print out) the value of $t$ for this hypothesis using the formula given in lecture.
+    b. Determine how many degrees of freedom are present in the calculation of the sample mean (#23).
+    c. Determine the probability of generating a value of $t$ "as or more extreme" than what we measured above, using the function `pt` and a two-tailed test.  Is the hypothesis ruled out (at $\alpha=0.05$)?
+
+```{r}
+```
+
+
+
+25. Check your answers to #24 using the convenience function `t.test`.
+
+```{r}
+```
+
+
+26. As part of the survey, students were asked to estimate what the mean height of students would be.  Treating these estimates as hypotheses about the student population more broadly, how many of these hypotheses can be ruled out (at $\alpha=0.05$) using the survey data?  How many are consistent with the data?  Don't use a confidence interval (yet): re-use your code from #24, but replace the guess of 71 inches with the actual student guesses from the survey, using either a loop or a vector calculation.
+
+```{r}
+```
+
+
+27. Use the Student t quantile function to calculate the 95% confidence interval describing the range of (hypothetical) mean population heights consistent with the survey data.  Confirm that your values agree with the values given by `t.test`.
+
+```{r}
+```
+
+
+28. Confirm that this confidence interval includes all the "correct" student guesses, and excludes all the "incorrect" guesses.  (The best way to do this is to write a loop in R that prints out each student guess, followed by the TRUE/FALSE result of a logical operation indicating whether that guess is permitted by the data.)
+
+```{r}
+```
